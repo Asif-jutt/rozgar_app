@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../widgets/company/bottomnav.dart';
 import '../../widgets/company/postjob_body.dart';
+import '../../widgets/company/drawer_company.dart';
+
+
 
 class PostJobsPage extends StatelessWidget {
   const PostJobsPage({super.key});
@@ -22,7 +25,7 @@ class PostJobsPage extends StatelessWidget {
       body: SingleChildScrollView(
         child: PostJobWidget(),
       ),
-
+      drawer: const CompanyDrawer(),
       bottomNavigationBar: BottomNavigation(),
     );
   }

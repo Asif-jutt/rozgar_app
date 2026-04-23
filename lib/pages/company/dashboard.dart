@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../widgets/company/dashbody.dart';
 import '../../widgets/company/bottomnav.dart';
+import '../../widgets/company/drawer_company.dart';
+
+
+
 class CompanyDashboard extends StatelessWidget {
   const CompanyDashboard({super.key});
 
@@ -60,6 +64,7 @@ class CompanyDashboard extends StatelessWidget {
       body: SingleChildScrollView(
   child: DashboardBody(),
       ),
+      drawer: const CompanyDrawer(),
       bottomNavigationBar: BottomNavigation(),
     );
   }

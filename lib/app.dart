@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import './pages/company/dashboard.dart';
 import './pages/company/postjob.dart';
-
+import './pages/company/companyprofile.dart';
+import './pages/company/manageapplicants.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -17,6 +18,8 @@ class MyApp extends StatelessWidget {
       routes: {
         "/home": (context) => CompanyDashboard(),
         "/post-jobs": (context) => PostJobsPage(),
+        "/company-profile": (context) => CompanyProfilePage(),
+        "/manage-applicants": (context) => ManageApplicantsPage(),
       },
     );
   }
