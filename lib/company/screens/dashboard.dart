@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../widgets/company/dashbody.dart';
-import '../../widgets/company/bottomnav.dart';
-import '../../widgets/company/drawer_company.dart';
+import '../widgets/dashbody.dart';
+import '../widgets/bottomnav.dart';
+import '../widgets/drawer_company.dart';
 
 
 

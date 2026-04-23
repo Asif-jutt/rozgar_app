@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/drawer_company.dart';
 
 class ManageApplicantsPage extends StatelessWidget {
   const ManageApplicantsPage({super.key});
@@ -96,7 +97,7 @@ class ManageApplicantsPage extends StatelessWidget {
           const Spacer(),
         ],
       ),
-
+      drawer: const CompanyDrawer(),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.black,
         selectedItemColor: Colors.blue,

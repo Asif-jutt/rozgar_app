@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../widgets/company/bottomnav.dart';
-import '../../widgets/company/postjob_body.dart';
-import '../../widgets/company/drawer_company.dart';
+import '../widgets/bottomnav.dart';
+import '../widgets//postjob_body.dart';
+import '../widgets/drawer_company.dart';
 
 
 

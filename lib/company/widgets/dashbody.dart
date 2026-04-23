@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/data.dart';
+import '../models/data.dart';
 
 class DashboardBody extends StatelessWidget {
   const DashboardBody({super.key});

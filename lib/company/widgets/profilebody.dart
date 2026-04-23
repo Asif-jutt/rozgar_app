@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/data.dart';
+import '../models/data.dart';
 
 class JobsGrid extends StatelessWidget {
   const JobsGrid({super.key});

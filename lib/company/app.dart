@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import './pages/company/dashboard.dart';
-import './pages/company/postjob.dart';
-import './pages/company/companyprofile.dart';
-import './pages/company/manageapplicants.dart';
+import 'screens/dashboard.dart';
+import 'screens/postjob.dart';
+import 'screens/companyprofile.dart';
+import 'screens/manageapplicants.dart';
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

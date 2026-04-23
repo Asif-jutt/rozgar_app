@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../widgets/company/profilebody.dart';
-import '../../widgets/company/bottomnav.dart';
-import '../../widgets/company/drawer_company.dart';
+import '../widgets/profilebody.dart';
+import '../widgets/bottomnav.dart';
+import '../widgets/drawer_company.dart';
 
 class CompanyProfilePage extends StatelessWidget {
   const CompanyProfilePage({super.key});
