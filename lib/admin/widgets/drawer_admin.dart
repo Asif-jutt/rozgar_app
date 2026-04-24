@@ -22,26 +22,32 @@ class AdminDrawer extends StatelessWidget {
             leading: const Icon(Icons.dashboard),
             title: const Text('Dashboard'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.pushNamed(context, "/admin" );
             },
           ),
 
           ListTile(
             leading: const Icon(Icons.work),
             title: const Text('View All Jobs'),
-            onTap: () {},
+            onTap: () { 
+              Navigator.pushNamed(context, "/user-manages");
+            },
           ),
 
           ListTile(
             leading: const Icon(Icons.business),
             title: const Text('Manage Company'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, "/user-manage");
+            },
           ),
 
           ListTile(
             leading: const Icon(Icons.people),
             title: const Text('Users Manage'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, "/users-manage");
+            },
           ),
 
           ListTile(
