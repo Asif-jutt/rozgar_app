@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/user/widgets/drawer.dart';
 
 class Buildprofile extends StatelessWidget {
   const Buildprofile({super.key});
@@ -81,6 +82,7 @@ class Buildprofile extends StatelessWidget {
           ),
         ),
       ),
+      drawer: DrawerWidget(),
     );
   }
 }

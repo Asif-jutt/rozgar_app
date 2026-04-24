@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/user/widgets/drawer.dart';
 
 class Myapplication extends StatelessWidget {
   const Myapplication({super.key});
@@ -6,6 +7,7 @@ class Myapplication extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       body: ListView(
         children: [
           Text("My Applications"),
@@ -54,8 +56,8 @@ class Myapplication extends StatelessWidget {
           ),
           SizedBox(width: 20,),
         ],
-      )
-        
+      ),
+      drawer: DrawerWidget(), 
     );
   }
 }
