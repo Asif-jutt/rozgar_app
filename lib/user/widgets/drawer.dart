@@ -1,58 +1,111 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
 
 class DrawerWidget extends StatelessWidget {
   const DrawerWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: Text("Home"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/home');
-              },
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: AppColors.primaryColor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.secondaryColor,
+                  child: const Text(
+                    'JD',
+                    style: TextStyle(
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Job Seeker',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'user@example.com',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
             ),
-            ListTile(
-              title: Text("Login"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/Login');
-              },
+          ),
+          ListTile(
+            leading: const Icon(Icons.home, color: AppColors.primaryColor),
+            title: const Text(AppStrings.home),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/home');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.search, color: AppColors.primaryColor),
+            title: const Text(AppStrings.findJobs),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/home');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.person, color: AppColors.primaryColor),
+            title: const Text(AppStrings.myProfile),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/myprofile');
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.assignment,
+              color: AppColors.primaryColor,
             ),
-            ListTile(
-              title: Text("Sign Up"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/Signup');
-              },
+            title: const Text(AppStrings.myApplications),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/myapplication');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.edit, color: AppColors.primaryColor),
+            title: const Text(AppStrings.buildProfile),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/buildprofile');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.settings, color: AppColors.primaryColor),
+            title: const Text(AppStrings.settings),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: AppColors.errorColor),
+            title: const Text(
+              AppStrings.logout,
+              style: TextStyle(color: AppColors.errorColor),
             ),
-            ListTile(
-              title: Text("Build Profile"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/buildprofile');
-              },
-            ),
-            ListTile(
-              title: Text("My Profile"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/myprofile');
-              },
-            ),
-            ListTile(
-              title: Text("My Application"),
-              onTap: (){
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/myapplication');
-              },
-            ),
-          ],
-        ),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/Login');
+            },
+          ),
+        ],
       ),
     );
   }

@@ -1,69 +1,252 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/user/widgets/drawer.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
+import 'package:rozgar/user/models/job_model.dart';
+import 'package:rozgar/user/widgets/app_bar_widgets.dart';
+import 'package:rozgar/user/widgets/custom_widgets.dart';
+import 'package:rozgar/user/widgets/job_card.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  int _selectedBottomNavIndex = 0;
+  List<Job> jobs = [];
+  String _selectedLocation = 'All';
+
+  @override
+  void initState() {
+    super.initState();
+    _generateSampleJobs();
+  }
+
+  void _generateSampleJobs() {
+    jobs = [
+      Job(
+        id: '1',
+        jobTitle: 'Flutter Developer',
+        companyName: 'Tech Solutions Inc',
+        location: 'Karachi',
+        salary: '100k - 150k',
+        requiredSkills: ['Flutter', 'Dart', 'Firebase', 'REST API'],
+        description: 'We are looking for an experienced Flutter developer...',
+        postedDate: DateTime.now().subtract(const Duration(days: 2)),
+        jobType: 'Full-time',
+      ),
+      Job(
+        id: '2',
+        jobTitle: 'Mobile App Developer',
+        companyName: 'Digital Agency',
+        location: 'Lahore',
+        salary: '80k - 120k',
+        requiredSkills: ['React Native', 'JavaScript', 'Redux'],
+        description: 'Join our dynamic team of mobile developers...',
+        postedDate: DateTime.now().subtract(const Duration(days: 5)),
+        jobType: 'Full-time',
+      ),
+      Job(
+        id: '3',
+        jobTitle: 'UI/UX Designer',
+        companyName: 'Creative Studio',
+        location: 'Islamabad',
+        salary: '60k - 90k',
+        requiredSkills: ['Figma', 'UI Design', 'Prototyping'],
+        description: 'Design beautiful user interfaces for our apps...',
+        postedDate: DateTime.now().subtract(const Duration(days: 1)),
+        jobType: 'Part-time',
+      ),
+      Job(
+        id: '4',
+        jobTitle: 'Backend Developer',
+        companyName: 'Cloud Systems',
+        location: 'Karachi',
+        salary: '120k - 180k',
+        requiredSkills: ['Node.js', 'MongoDB', 'AWS', 'Docker'],
+        description: 'Build scalable backend solutions...',
+        postedDate: DateTime.now().subtract(const Duration(days: 3)),
+        jobType: 'Full-time',
+      ),
+      Job(
+        id: '5',
+        jobTitle: 'QA Tester',
+        companyName: 'Quality Assurance Ltd',
+        location: 'Lahore',
+        salary: '50k - 70k',
+        requiredSkills: ['Manual Testing', 'Automation', 'Selenium'],
+        description: 'Ensure quality of our software products...',
+        postedDate: DateTime.now(),
+        jobType: 'Full-time',
+      ),
+      Job(
+        id: '6',
+        jobTitle: 'Data Analyst',
+        companyName: 'Analytics Pro',
+        location: 'Karachi',
+        salary: '90k - 140k',
+        requiredSkills: ['Python', 'SQL', 'Tableau', 'Excel'],
+        description: 'Analyze data and generate insights...',
+        postedDate: DateTime.now().subtract(const Duration(days: 7)),
+        jobType: 'Full-time',
+      ),
+    ];
+  }
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(AppStrings.location),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Wrap(
+                spacing: 8,
+                children: ['All', 'Karachi', 'Lahore', 'Islamabad']
+                    .map(
+                      (location) => ChoiceChip(
+                        label: Text(location),
+                        selected: _selectedLocation == location,
+                        onSelected: (selected) {
+                          setState(() => _selectedLocation = location);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Rozgar"),
+      appBar: CustomAppBar(
+        title: AppStrings.home,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No new notifications')),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.login),
+            onPressed: () {
+              Navigator.pushNamed(context, '/Login');
+            },
+          ),
+        ],
       ),
-      drawer: DrawerWidget(),
+      drawer: UserDrawer(
+        userName: 'John Doe',
+        userEmail: 'john@example.com',
+        onLogout: () {
+          Navigator.pushReplacementNamed(context, '/Login');
+        },
+      ),
       body: Column(
-        
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        // here we will be implementing the filters for jobs on the basis of Location, Sallary, and Skills
-        
           // Search Bar
+          CustomSearchBar(
+            hintText: AppStrings.search,
+            onFilterPressed: _showFilterDialog,
+          ),
+
+          // Filters
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search for jobs",
-                suffixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingMedium,
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: Text(AppStrings.location),
+                    onSelected: (_) => _showFilterDialog(),
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Salary: All'),
+                    onSelected: (_) {},
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Job Type: All'),
+                    onSelected: (_) {},
+                  ),
+                ],
               ),
             ),
           ),
+          const SizedBox(height: AppSpacing.verticalSpaceMedium),
 
-          // Jobs Grid
+          // Job Grid
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2, // 2 per row
-              padding: const EdgeInsets.all(16),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.4,
-              children: [
-                Card(
-                  child: ListTile(
-                    title: Text("Job1"),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: Text("Job2"),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: Text("Job3"),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    title: Text("Job4"),
-                  ),
-                ),
-              ],
+            child: GridView.builder(
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.55,
+                crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
+                mainAxisSpacing: AppSpacing.verticalSpaceMedium,
+              ),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                return JobCard(
+                  job: jobs[index],
+                  onApplyPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Applied to ${jobs[index].jobTitle}'),
+                      ),
+                    );
+                  },
+                  onCardPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Viewing ${jobs[index].jobTitle}'),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedBottomNavIndex,
+        items: [
+          NavigationItem(icon: Icons.home, label: AppStrings.home),
+          NavigationItem(icon: Icons.work, label: AppStrings.myJobs),
+          NavigationItem(icon: Icons.message, label: AppStrings.messages),
+        ],
+        onTap: (index) {
+          setState(() => _selectedBottomNavIndex = index);
+          switch (index) {
+            case 0:
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/myapplication');
+              break;
+            case 2:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Messages feature coming soon')),
+              );
+              break;
+          }
+        },
       ),
     );
   }

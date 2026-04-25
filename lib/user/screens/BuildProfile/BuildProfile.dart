@@ -1,88 +1,121 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/user/widgets/drawer.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
+import 'package:rozgar/user/widgets/app_bar_widgets.dart';
+import 'package:rozgar/user/widgets/custom_widgets.dart';
 
-class Buildprofile extends StatelessWidget {
-  const Buildprofile({super.key});
+class BuildprofileUI extends StatelessWidget {
+  const BuildprofileUI({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final List<String> skills = [
+      'Flutter',
+      'React Native',
+      'JavaScript',
+      'Python',
+      'Java',
+      'C++',
+      'SQL',
+      'MongoDB',
+      'Firebase',
+      'AWS',
+      'Docker',
+      'UI Design',
+      'UX Design',
+    ];
+
+    final List<String> degrees = [
+      'Matric',
+      'Bachelor',
+      'Master',
+      'PhD'
+    ];
+
     return Scaffold(
+      appBar: const CustomAppBar(
+        title: AppStrings.buildProfile,
+        showBackButton: true,
+      ),
+      drawer: UserDrawer(
+        userName: 'Your Name',
+        userEmail: 'your@email.com',
+        onLogout: () {
+          Navigator.pushReplacementNamed(context, '/Login');
+        },
+      ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Select Skills"),
+        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(AppStrings.selectSkills, style: AppTextStyles.headline4),
+            const SizedBox(height: 8),
+            Text('Select skills from the list',
+                style: AppTextStyles.bodySmall),
+            const SizedBox(height: 16),
 
-              SizedBox(
-                width: double.infinity, // full width
-                child: DropdownButton<String>(
-                  isExpanded: true, // IMPORTANT for full width
-                  items: [
-                    DropdownMenuItem(value: "flutter", child: Text("Flutter")),
-                    DropdownMenuItem(value: "react", child: Text("React")),
-                    DropdownMenuItem(value: "angular", child: Text("Angular")),
-                  ],
-                  onChanged: (value) {
-                    // handle skill selection
-                  },
-                ),
-              ),
-              SizedBox(height: 20),
-              Text("Enter Degrees"),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Enter your degrees",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Text("Address"),
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Enter your address",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-              Text("Email"),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: skills
+                  .map((skill) => Chip(label: Text(skill)))
+                  .toList(),
+            ),
 
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Enter your email",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                ),
-              ),
-              // Upload CV Button
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // handle CV upload
-                },
-                child: Text("Upload CV"),
-              ),
-              SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // save profile logic
-                  },
-                  child: Text("Create"),
-                ),
-              ),
-            ],
-          ),
+            const SizedBox(height: 24),
+
+            Text(AppStrings.enterDegrees, style: AppTextStyles.headline4),
+            const SizedBox(height: 8),
+
+            DropdownButton<String>(
+              isExpanded: true,
+              hint: const Text('Select Degree'),
+              value: null,
+              items: degrees
+                  .map((d) => DropdownMenuItem(
+                        value: d,
+                        child: Text(d),
+                      ))
+                  .toList(),
+              onChanged: (_) {},
+            ),
+
+            const SizedBox(height: 16),
+
+            CustomTextField(
+              label: AppStrings.address,
+              hintText: 'Enter your address',
+              prefixIcon: Icons.location_on,
+              maxLines: 2,
+              minLines: 2,
+            ),
+
+            const SizedBox(height: 16),
+
+            CustomTextField(
+              label: AppStrings.email,
+              hintText: 'Enter your email',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+            ),
+
+            const SizedBox(height: 16),
+
+            CustomButton(
+              text: AppStrings.uploadCV,
+              onPressed: () {},
+              isOutlined: true,
+            ),
+
+            const SizedBox(height: 24),
+
+            CustomButton(
+              text: AppStrings.create,
+              onPressed: () {},
+            ),
+          ],
         ),
       ),
-      drawer: DrawerWidget(),
     );
   }
 }

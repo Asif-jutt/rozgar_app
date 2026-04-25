@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
+import 'package:rozgar/user/widgets/app_bar_widgets.dart';
+import 'package:rozgar/user/widgets/custom_widgets.dart';
 
 class Signup extends StatelessWidget {
   const Signup({super.key});
@@ -6,65 +9,94 @@ class Signup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: const CustomAppBar(
+        title: AppStrings.signup,
+        showBackButton: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Full Name", style: TextStyle(fontSize: 16.0,),),
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Enter your full name",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
+            // Welcome Text
+            Text('Create Account', style: AppTextStyles.headline2),
+            const SizedBox(height: AppSpacing.verticalSpaceSmall),
+            Text(
+              'Join our job portal community',
+              style: AppTextStyles.bodySmall,
             ),
+            const SizedBox(height: AppSpacing.verticalSpaceLarge),
 
-            Text("CNIC Number", style: TextStyle(fontSize: 16.0,),),
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Enter your CNIC number",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
+            // Name TextField
+            CustomTextField(
+              label: 'Full Name',
+              hintText: 'Enter your full name',
+              prefixIcon: Icons.person,
             ),
+            const SizedBox(height: AppSpacing.verticalSpaceMedium),
 
-            Text("Email Address", style: TextStyle(fontSize: 16.0,),),
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Enter your email address",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
+            // Email TextField
+            CustomTextField(
+              label: AppStrings.email,
+              hintText: 'Enter your email',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
             ),
+            const SizedBox(height: AppSpacing.verticalSpaceMedium),
 
-            Text("Password", style: TextStyle(fontSize: 16.0,),),
-            TextField(
+            // Password TextField
+            CustomTextField(
+              label: AppStrings.password,
+              hintText: 'Enter your password',
+              prefixIcon: Icons.lock,
               obscureText: true,
-              decoration: InputDecoration(
-                hintText: "Enter your password",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-              ),
+              suffixIcon: Icons.visibility,
             ),
+            const SizedBox(height: AppSpacing.verticalSpaceMedium),
 
-            SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // sign up logic
-                },
-                child: Text("Register"),
-              ),
+            // Confirm Password TextField
+            CustomTextField(
+              label: AppStrings.confirmPassword,
+              hintText: 'Confirm your password',
+              prefixIcon: Icons.lock,
+              obscureText: true,
+              suffixIcon: Icons.visibility,
+            ),
+            const SizedBox(height: AppSpacing.verticalSpaceLarge),
+
+            // Signup Button
+            CustomButton(
+              text: AppStrings.signup,
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/buildprofile');
+              },
+            ),
+            const SizedBox(height: AppSpacing.verticalSpaceMedium),
+
+            // Login Link
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Already have an account? ',
+                  style: AppTextStyles.bodySmall,
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/Login'),
+                  child: const Text(
+                    AppStrings.login,
+                    style: TextStyle(
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-      )
+      ),
     );
   }
 }
+             
