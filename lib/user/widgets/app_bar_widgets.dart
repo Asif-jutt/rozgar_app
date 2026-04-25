@@ -166,11 +166,20 @@ class UserDrawer extends StatelessWidget {
           ),
           _buildDrawerItem(
             context,
-            icon: Icons.search,
-            title: AppStrings.findJobs,
+            icon: Icons.home,
+            title: "Admin",
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/home');
+              Navigator.pushNamed(context, '/admin');
+            },
+          ),
+          _buildDrawerItem(
+            context,
+            icon: Icons.home,
+            title: "Company",
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/dashboard');
             },
           ),
           _buildDrawerItem(

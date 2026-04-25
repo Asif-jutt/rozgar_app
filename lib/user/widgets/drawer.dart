@@ -52,13 +52,22 @@ class DrawerWidget extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.search, color: AppColors.primaryColor),
-            title: const Text(AppStrings.findJobs),
+            leading: const Icon(Icons.home, color: AppColors.primaryColor),
+            title: const Text(AppStrings.company),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/home');
+              Navigator.pushNamed(context, '/dashboard');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.home, color: AppColors.primaryColor),
+            title: const Text(AppStrings.admin),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/admin');
+            },
+          ),
+          
           ListTile(
             leading: const Icon(Icons.person, color: AppColors.primaryColor),
             title: const Text(AppStrings.myProfile),

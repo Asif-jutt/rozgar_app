@@ -7,6 +7,15 @@ import 'package:rozgar/user/screens/home/home.dart';
 import 'package:rozgar/user/screens/MyApplication/Myapplication.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 
+
+import 'company/screens/dashboard.dart';
+import 'company/screens/postjob.dart';
+import 'company/screens/companyprofile.dart';
+import 'company/screens/manageapplicants.dart';
+
+import 'admin/screens/admindashboard.dart';
+import 'admin/screens/usermanage.dart';
+
 class Rozgar extends StatelessWidget {
   const Rozgar({super.key});
 
@@ -64,13 +73,25 @@ class Rozgar extends StatelessWidget {
         ),
       ),
       home: const Home(),
-      routes: {
-        '/home': (context) => const Home(),
-        '/Login': (context) => const Login(),
-        '/Signup': (context) => const Signup(),
-        '/buildprofile': (context) => const BuildprofileUI(),
-        '/myprofile': (context) => const Myprofile(),
-        '/myapplication': (context) => const Myapplication(),
+     routes: {
+        // User side
+        "/home": (context) => const Home(),
+        "/Login": (context) => const Login(),
+        "/Signup": (context) => const Signup(),
+        "/buildprofile": (context) => const BuildprofileUI(),
+        "/myprofile": (context) => const Myprofile(),
+        "/myapplication": (context) => const Myapplication(),
+
+        // Company/Admin side
+        "/dashboard": (context) => CompanyDashboard(),
+        "/post-jobs": (context) => PostJobsPage(),
+        "/company-profile": (context) => CompanyProfilePage(),
+        "/manage-applicants": (context) => ManageApplicantsPage(),
+
+
+        // Admin side
+        "/admin": (context) => AdminDashboardPage(),
+        "/user-manages": (context) => UsersManageScreen(),
       },
     );
   }

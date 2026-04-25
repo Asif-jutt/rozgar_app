@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rozgar/user/app.dart';
+import 'package:rozgar/app.dart';
 
 void main() {
   testWidgets('Rozgar app loads successfully', (WidgetTester tester) async {

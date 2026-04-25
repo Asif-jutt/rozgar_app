@@ -42,6 +42,8 @@ class AppStrings {
   static const String myJobs = 'My Jobs';
   static const String messages = 'Messages';
   static const String profile = 'Profile';
+  static const String admin = 'Settings';
+  static const String company = 'Settings';
   static const String settings = 'Settings';
   static const String logout = 'Logout';
   static const String archived = 'Archived';
