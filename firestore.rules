@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow unauthenticated read, authenticated write for users collection
+    match /users/{userId} {
+      // Owner can read their own profile
+      allow read: if request.auth.uid == userId;
+      // Owner can update their own profile
+      allow update: if request.auth.uid == userId;
+      // Prevent deletes
+      allow delete: if false;
+      // User creation happens during signup (handled by backend)
+      allow create: if request.auth.uid == userId;
+    }
+
+    // Jobs collection - public read, company write
+    match /jobs/{jobId} {
+      // Anyone can read jobs
+      allow read: if true;
+      // Company can create jobs (role check would be ideal)
+      allow create: if request.auth != null;
+      // Company can update/delete their own jobs
+      allow update, delete: if request.auth != null && 
+        request.resource.data.companyId == request.auth.uid;
+    }
+
+    // Applications collection - authenticated users only
+    match /applications/{appId} {
+      // Users can read their own applications
+      allow read: if request.auth.uid == resource.data.userId || 
+                     request.auth.uid == resource.data.companyId;
+      // Users can create applications for jobs
+      allow create: if request.auth.uid == request.resource.data.userId;
+      // Company can update status of applications for their jobs
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.uid == resource.data.companyId);
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // Storage bucket rules handled separately in Cloud Storage
+  }
+}

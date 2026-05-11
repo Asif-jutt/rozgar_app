@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class JobApplication {
   final String id;
   final String jobId;
   final String userId;
+  final String? userName;
   final String jobTitle;
   final String companyName;
   final String status; // Applied, Under Review, Interview, Rejected, Accepted
@@ -13,6 +16,7 @@ class JobApplication {
     required this.id,
     required this.jobId,
     required this.userId,
+    this.userName,
     required this.jobTitle,
     required this.companyName,
     required this.status,
@@ -26,12 +30,16 @@ class JobApplication {
       id: json['id'] ?? '',
       jobId: json['jobId'] ?? '',
       userId: json['userId'] ?? '',
+      userName: json['userName'],
       jobTitle: json['jobTitle'] ?? '',
       companyName: json['companyName'] ?? '',
       status: json['status'] ?? 'Applied',
-      appliedDate: json['appliedDate'] != null
-          ? DateTime.parse(json['appliedDate'])
-          : DateTime.now(),
+      appliedDate: (() {
+        final raw = json['appliedDate'];
+        if (raw is Timestamp) return raw.toDate();
+        if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
+        return DateTime.now();
+      })(),
       interviewDate: json['interviewDate'],
       feedback: json['feedback'],
     );
@@ -42,6 +50,7 @@ class JobApplication {
       'id': id,
       'jobId': jobId,
       'userId': userId,
+      'userName': userName,
       'jobTitle': jobTitle,
       'companyName': companyName,
       'status': status,

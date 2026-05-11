@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/models/job_model.dart';
+import 'package:rozgar/user/models/application_model.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
 import 'package:rozgar/user/widgets/job_card.dart';
+import 'package:rozgar/services/database_service.dart';
+import 'package:rozgar/services/auth_service.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -14,90 +17,13 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedBottomNavIndex = 0;
-  List<Job> jobs = [];
   String _selectedLocation = 'All';
+  final DatabaseService _databaseService = DatabaseService();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    _generateSampleJobs();
-  }
-
-  void _generateSampleJobs() {
-    jobs = [
-      Job(
-        id: '1',
-        jobTitle: 'Flutter Developer',
-        companyName: 'Tech Solutions Inc',
-        location: 'Karachi',
-        salary: '100k - 150k',
-        requiredSkills: ['Flutter', 'Dart', 'Firebase', 'REST API'],
-        description: 'We are looking for an experienced Flutter developer...',
-        postedDate: DateTime.now().subtract(const Duration(days: 2)),
-        jobType: 'Full-time',
-        image: 'assets/Images/flutter_developer.png',
-      ),
-      Job(
-        id: '2',
-        jobTitle: 'Mobile App Developer',
-        companyName: 'Digital Agency',
-        location: 'Lahore',
-        salary: '80k - 120k',
-        requiredSkills: ['React Native', 'JavaScript', 'Redux'],
-        description: 'Join our dynamic team of mobile developers...',
-        postedDate: DateTime.now().subtract(const Duration(days: 5)),
-        jobType: 'Full-time',
-        image: 'assets/Images/mad_developer.jpeg',
-      ),
-      Job(
-        id: '3',
-        jobTitle: 'UI/UX Designer',
-        companyName: 'Creative Studio',
-        location: 'Islamabad',
-        salary: '60k - 90k',
-        requiredSkills: ['Figma', 'UI Design', 'Prototyping'],
-        description: 'Design beautiful user interfaces for our apps...',
-        postedDate: DateTime.now().subtract(const Duration(days: 1)),
-        jobType: 'Part-time',
-        image: 'assets/Images/ui_ux_designer.jpeg',
-      ),
-      Job(
-        id: '4',
-        jobTitle: 'Backend Developer',
-        companyName: 'Cloud Systems',
-        location: 'Karachi',
-        salary: '120k - 180k',
-        requiredSkills: ['Node.js', 'MongoDB', 'AWS', 'Docker'],
-        description: 'Build scalable backend solutions...',
-        postedDate: DateTime.now().subtract(const Duration(days: 3)),
-        jobType: 'Full-time',
-        image: 'assets/Images/backend_developer.png',
-      ),
-      Job(
-        id: '5',
-        jobTitle: 'QA Tester',
-        companyName: 'Quality Assurance Ltd',
-        location: 'Lahore',
-        salary: '50k - 70k',
-        requiredSkills: ['Manual Testing', 'Automation', 'Selenium'],
-        description: 'Ensure quality of our software products...',
-        postedDate: DateTime.now(),
-        jobType: 'Full-time',
-        image: 'assets/Images/qa_engineer.jpeg',
-      ),
-      Job(
-        id: '6',
-        jobTitle: 'Data Analyst',
-        companyName: 'Analytics Pro',
-        location: 'Karachi',
-        salary: '90k - 140k',
-        requiredSkills: ['Python', 'SQL', 'Tableau', 'Excel'],
-        description: 'Analyze data and generate insights...',
-        postedDate: DateTime.now().subtract(const Duration(days: 7)),
-        jobType: 'Full-time',
-        image: 'assets/Images/data_analyst.png',
-      ),
-    ];
   }
 
   void _showFilterDialog() {
@@ -133,126 +59,129 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = _authService.currentUser;
+    
     return Scaffold(
       appBar: CustomAppBar(
         title: AppStrings.home,
         actions: [
           IconButton(
-            icon: Tooltip(
+            icon: const Tooltip(
               message: "Notifications",
-              child: const Icon(Icons.notifications_none, color: Colors.white),
+              child: Icon(Icons.notifications_none, color: Colors.white),
             ),
             onPressed: () {
-              Navigator.pushNamed(context, '/Notifications');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon')),
+              );
             },
           ),
           IconButton(
-            icon: Tooltip(
-              message: "Login",
-              child: const Icon(Icons.login, color: Colors.white),
+            icon: const Tooltip(
+              message: "Logout",
+              child: Icon(Icons.logout, color: Colors.white),
             ),
-            onPressed: () {
-              Navigator.pushNamed(context, '/Login');
+            onPressed: () async {
+              await _authService.logout();
             },
           ),
         ],
       ),
+      drawer: currentUser != null
+          ? UserDrawer(
+        userName: currentUser.email ?? 'User',
+        userEmail: currentUser.email ?? '',
+        onLogout: () async {
+          await _authService.logout();
+        },
+      )
+          : null,
+      body: StreamBuilder<List<Job>>(
+        stream: _selectedLocation == 'All'
+            ? _databaseService.getAllJobsStream()
+            : _databaseService.getAllJobsStream().map(
+          (jobs) => jobs
+              .where((job) => job.location == _selectedLocation)
+              .toList(),
+        ),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      drawer: UserDrawer(
-        userName: 'John Doe',
-        userEmail: 'john@example.com',
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/Login');
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
+          final jobs = snapshot.data ?? [];
+
+          if (jobs.isEmpty) {
+            return const Center(
+              child: Text('No jobs found'),
+            );
+          }
+
+          return Column(
+            children: [
+              CustomSearchBar(
+                hintText: AppStrings.search,
+                onFilterPressed: _showFilterDialog,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingMedium,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      FilterChip(
+                        label: Text(
+                          _selectedLocation == 'All'
+                              ? AppStrings.location
+                              : _selectedLocation,
+                        ),
+                        onSelected: (_) => _showFilterDialog(),
+                      ),
+                      const SizedBox(width: 8),
+                      FilterChip(
+                        label: Text('Jobs: ${jobs.length}'),
+                        onSelected: (_) {},
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.verticalSpaceMedium),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.1,
+                    crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
+                    mainAxisSpacing: AppSpacing.verticalSpaceMedium,
+                  ),
+                  itemCount: jobs.length,
+                  itemBuilder: (context, index) {
+                    return JobCard(
+                      job: jobs[index],
+                      onApplyPressed: () async {
+                        await _showApplyDialog(context, jobs[index]);
+                      },
+                      onCardPressed: () {
+                        _showJobDetails(context, jobs[index]);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
         },
       ),
-
-      body: Column(
-        children: [
-          CustomSearchBar(
-            hintText: AppStrings.search,
-            onFilterPressed: _showFilterDialog,
-          ),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMedium,
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: Text(AppStrings.location),
-                    onSelected: (_) => _showFilterDialog(),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  FilterChip(
-                    label: const Text('Salary: All'),
-                    onSelected: (_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Salary filter coming soon"),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  FilterChip(
-                    label: const Text('Job Type: All'),
-                    onSelected: (_) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Job type filter coming soon"),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.verticalSpaceMedium),
-
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio:
-                    1.1, // handles card size (white spacing b/w the cards)
-                crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
-                mainAxisSpacing: AppSpacing.verticalSpaceMedium,
-              ),
-              itemCount: jobs.length,
-              itemBuilder: (context, index) {
-                return JobCard(
-                  job: jobs[index],
-                  onApplyPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Applied to ${jobs[index].jobTitle}'),
-                      ),
-                    );
-                  },
-                  onCardPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Viewing ${jobs[index].jobTitle}'),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _selectedBottomNavIndex,
         items: [
@@ -276,6 +205,183 @@ class _HomeState extends State<Home> {
           }
         },
       ),
+    );
+  }
+
+  Future<void> _showApplyDialog(BuildContext context, Job job) async {
+    final currentUser = _authService.currentUser;
+    
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to apply')),
+      );
+      return;
+    }
+
+    // Check if already applied
+    final alreadyApplied = await _databaseService.hasUserApplied(
+      currentUser.uid,
+      job.id,
+    );
+
+    if (alreadyApplied) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You already applied for ${job.jobTitle}')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Apply for ${job.jobTitle}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Company: ${job.companyName}'),
+              const SizedBox(height: 8),
+              Text('Location: ${job.location}'),
+              const SizedBox(height: 8),
+              Text('Salary: ${job.salary}'),
+              const SizedBox(height: 8),
+              Text('Type: ${job.jobType}'),
+              const SizedBox(height: 16),
+              const Text(
+                'Are you sure you want to apply for this position?',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _submitApplication(context, currentUser.uid, job);
+              },
+              child: const Text('Apply', style: TextStyle(color: Colors.green)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _submitApplication(
+      BuildContext context, String userId, Job job) async {
+    final application = JobApplication(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      jobId: job.id,
+      userId: userId,
+      jobTitle: job.jobTitle,
+      companyName: job.companyName,
+      status: 'Applied',
+      appliedDate: DateTime.now(),
+    );
+
+    try {
+      await _databaseService.createApplication(application);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Applied to ${job.jobTitle} successfully!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error applying: $e')),
+      );
+    }
+  }
+
+  void _showJobDetails(BuildContext context, Job job) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
+              Text(
+                job.jobTitle,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(job.companyName,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey)),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+              const Text(
+                'Job Description',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(job.description),
+              const SizedBox(height: 16),
+              const Text(
+                'Required Skills',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: job.requiredSkills
+                    .map((skill) => Chip(label: Text(skill)))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Salary'),
+                      const SizedBox(height: 4),
+                      Text(
+                        job.salary,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Location'),
+                      const SizedBox(height: 4),
+                      Text(
+                        job.location,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

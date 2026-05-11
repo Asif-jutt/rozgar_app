@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final int maxLines;
   final int minLines;
+  
 
   const CustomTextField({
     Key? key,

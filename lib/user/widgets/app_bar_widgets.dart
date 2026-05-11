@@ -218,6 +218,7 @@ class UserDrawer extends StatelessWidget {
             title: AppStrings.settings,
             onTap: () {
               Navigator.pop(context);
+              Navigator.pushNamed(context, '/settings');
             },
           ),
           _buildDrawerItem(

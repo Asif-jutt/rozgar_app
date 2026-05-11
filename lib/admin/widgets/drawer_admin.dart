@@ -11,8 +11,8 @@ class AdminDrawer extends StatelessWidget {
         children: [
 
           const UserAccountsDrawerHeader(
-            accountName: Text('Admin'),
-            accountEmail: Text('admin@rozgar.com'),
+            accountName: Text('Asif Hussain'),
+            accountEmail: Text('wakeel@rozgar.com'),
             currentAccountPicture: CircleAvatar(
               child: Icon(Icons.admin_panel_settings),
             ),
@@ -26,6 +26,7 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
 
+         
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Home'),
@@ -34,13 +35,7 @@ class AdminDrawer extends StatelessWidget {
             },
           ),
 
-          ListTile(
-            leading: const Icon(Icons.business),
-            title: const Text('Manage Company'),
-            onTap: () {
-              Navigator.pushNamed(context, "/user-manage");
-            },
-          ),
+
 
           ListTile(
             leading: const Icon(Icons.people),
@@ -53,7 +48,9 @@ class AdminDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Manage Applicants'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, '/manage-applicants');
+            },
           ),
 
           const Divider(),

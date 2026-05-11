@@ -12,9 +12,13 @@ class AdminDashboardPage extends StatelessWidget {
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text("Admin Dashboard", style: TextStyle(color: Colors.white),),
+        title: const Text(
+          "Admin Dashboard",
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
         backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
 
       body: AdminBody(),

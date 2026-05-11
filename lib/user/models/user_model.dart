@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserProfile {
   final String id;
   final String cnic;
@@ -26,6 +28,27 @@ class UserProfile {
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    // createdAt/updatedAt in Firestore can be Timestamp or String
+    final createdRaw = json['createdAt'];
+    DateTime createdAt;
+    if (createdRaw is Timestamp) {
+      createdAt = createdRaw.toDate();
+    } else if (createdRaw is String) {
+      createdAt = DateTime.tryParse(createdRaw) ?? DateTime.now();
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    final updatedRaw = json['updatedAt'];
+    DateTime? updatedAt;
+    if (updatedRaw is Timestamp) {
+      updatedAt = updatedRaw.toDate();
+    } else if (updatedRaw is String) {
+      updatedAt = DateTime.tryParse(updatedRaw);
+    } else {
+      updatedAt = null;
+    }
+
     return UserProfile(
       id: json['id'] ?? '',
       cnic: json['cnic'] ?? '',
@@ -40,12 +63,8 @@ class UserProfile {
               .toList() ??
           [],
       cvUrl: json['cvUrl'],
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
-          : null,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 
