@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "475735943347",
+    "project_id": "rozgar-25d03",
+    "storage_bucket": "rozgar-25d03.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:475735943347:android:d8b1606cc9309fe93528c6",
+        "android_client_info": {
+          "package_name": "com.example.rozgar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGdK8D-JKFQTIl_73PyePD1gmVJCq3v8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
