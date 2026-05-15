@@ -1,282 +1,149 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rozgar/services/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
+import 'package:rozgar/user/widgets/drawer.dart';
+import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class Myprofile extends StatefulWidget {
+class Myprofile extends StatelessWidget {
   const Myprofile({super.key});
 
   @override
-  State<Myprofile> createState() => _MyprofileState();
-}
-
-class _MyprofileState extends State<Myprofile> {
-  int _selectedBottomNavIndex = 0;
-
-  // Sample Data
-  final List<String> skills = ['Flutter', 'Dart', 'Firebase', 'REST API'];
-  final List<Map<String, String>> educations = [
-    {'degree': 'Matric', 'institution': 'ABC High School'},
-    {'degree': 'Bachelor', 'institution': 'XYZ University'},
-  ];
-
-  @override
   Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final firestore = FirestoreService();
+
     return Scaffold(
       appBar: const CustomAppBar(
         title: AppStrings.myProfile,
         showBackButton: true,
       ),
-      drawer: UserDrawer(
-        userName: 'John Doe',
-        userEmail: 'john@example.com',
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/Login');
-        },
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Header Card
-            Card(
-              elevation: AppDimensions.cardElevation,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.primaryColor,
-                      child: const Text(
-                        'JD',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.horizontalSpaceLarge),
-                    Expanded(
+      drawer: const SeekerDrawer(),
+      body: uid == null
+          ? const Center(child: Text('Please log in'))
+          : StreamBuilder(
+              stream: firestore.userProfileStream(uid),
+              builder: (context, profileSnap) {
+                return FutureBuilder(
+                  future: firestore.getUser(uid),
+                  builder: (context, userSnap) {
+                    final user = userSnap.data;
+                    final profile = profileSnap.data;
+                    final name = user?.name ?? 'User';
+                    final email = user?.email ?? '';
+                    final imageUrl =
+                        profile?.profileImageUrl ?? user?.profileImageUrl;
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('John Doe', style: AppTextStyles.headline4),
-                          const SizedBox(height: 4),
-                          Text(
-                            'john@example.com',
-                            style: AppTextStyles.bodySmall,
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                children: [
+                                  ProfileAvatar(
+                                    imageUrl: imageUrl,
+                                    radius: 50,
+                                    fallbackText: name,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(name, style: AppTextStyles.headline3),
+                                  Text(email, style: AppTextStyles.bodySmall),
+                                ],
+                              ),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Karachi, Pakistan',
-                            style: AppTextStyles.labelSmall,
+                          const SizedBox(height: 16),
+                          if (profile?.bio.isNotEmpty == true)
+                            _section('Bio', profile!.bio),
+                          if (profile?.skills.isNotEmpty == true)
+                            _chipsSection('Skills', profile!.skills),
+                          if (profile?.education.isNotEmpty == true)
+                            _section('Education', profile!.education),
+                          if (profile?.experience.isNotEmpty == true)
+                            _section('Experience', profile!.experience),
+                          if (profile?.cvResumeUrl != null &&
+                              profile!.cvResumeUrl!.isNotEmpty)
+                            Card(
+                              child: ListTile(
+                                leading: const Icon(Icons.link,
+                                    color: AppColors.primaryColor),
+                                title: const Text('CV / Resume'),
+                                subtitle: Text(
+                                  profile.cvResumeUrl!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: const Icon(Icons.open_in_new),
+                                onTap: () => _openUrl(profile.cvResumeUrl!),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/buildprofile'),
+                              icon: const Icon(Icons.edit),
+                              label: const Text('Edit Profile'),
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.verticalSpaceLarge),
-
-            // My Skills Section
-            Text(AppStrings.mySkills, style: AppTextStyles.headline3),
-            const SizedBox(height: AppSpacing.verticalSpaceMedium),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 1,
-                crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
-                mainAxisSpacing: AppSpacing.verticalSpaceMedium,
-              ),
-              itemCount: skills.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  elevation: AppDimensions.cardElevation,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
-                  ),
-                  color: AppColors.primaryLight.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: AppColors.successColor,
-                          size: AppDimensions.iconLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          skills[index],
-                          style: AppTextStyles.labelMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
             ),
-            const SizedBox(height: AppSpacing.verticalSpaceLarge),
+    );
+  }
 
-            // My Educations Section
-            Text(AppStrings.myEducations, style: AppTextStyles.headline3),
-            const SizedBox(height: AppSpacing.verticalSpaceMedium),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: educations.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  elevation: AppDimensions.cardElevation,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
-                  ),
-                  margin: const EdgeInsets.only(
-                    bottom: AppSpacing.verticalSpaceMedium,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.school,
-                              color: AppColors.primaryColor,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              educations[index]['degree']!,
-                              style: AppTextStyles.labelLarge,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          educations[index]['institution']!,
-                          style: AppTextStyles.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.verticalSpaceLarge),
-
-            // Other Info Section
-            Text(AppStrings.otherInfo, style: AppTextStyles.headline3),
-            const SizedBox(height: AppSpacing.verticalSpaceMedium),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              childAspectRatio: 1,
-              crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
-              mainAxisSpacing: AppSpacing.verticalSpaceMedium,
-              children: [
-                Card(
-                  elevation: AppDimensions.cardElevation,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.phone,
-                          color: AppColors.primaryColor,
-                          size: AppDimensions.iconLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('Phone', style: AppTextStyles.labelSmall),
-                        const SizedBox(height: 4),
-                        Text(
-                          '+92 3001234567',
-                          style: AppTextStyles.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Card(
-                  elevation: AppDimensions.cardElevation,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          color: AppColors.primaryColor,
-                          size: AppDimensions.iconLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('Location', style: AppTextStyles.labelSmall),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Karachi, Pakistan',
-                          style: AppTextStyles.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.verticalSpaceLarge),
+  Widget _section(String title, String body) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: AppTextStyles.labelLarge),
+            const SizedBox(height: 8),
+            Text(body, style: AppTextStyles.bodyMedium),
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _selectedBottomNavIndex,
-        items: [
-          NavigationItem(icon: Icons.home, label: AppStrings.home),
-          NavigationItem(icon: Icons.search, label: AppStrings.findJobs),
-          NavigationItem(icon: Icons.edit, label: AppStrings.edit),
-        ],
-        onTap: (index) {
-          setState(() => _selectedBottomNavIndex = index);
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/home');
-              break;
-            case 1:
-              Navigator.pushNamed(context, '/home');
-              break;
-            case 2:
-              Navigator.pushNamed(context, '/buildprofile');
-              break;
-          }
-        },
+    );
+  }
+
+  Widget _chipsSection(String title, List<String> items) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: AppTextStyles.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: items.map((s) => Chip(label: Text(s))).toList(),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }

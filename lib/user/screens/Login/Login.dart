@@ -71,7 +71,7 @@ class Login extends StatelessWidget {
             CustomButton(
               text: AppStrings.login,
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/home');
+                Navigator.pushReplacementNamed(context, '/user_home');
               },
             ),
             const SizedBox(height: AppSpacing.verticalSpaceMedium),

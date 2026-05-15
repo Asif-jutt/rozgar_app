@@ -1,75 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/models/job_model.dart';
+import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
+import 'package:rozgar/widgets/network_image_widget.dart';
 
 class AdminBody extends StatelessWidget {
   const AdminBody({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final firestore = FirestoreService();
 
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              "View All Jobs Status",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+    return FutureBuilder<Map<String, int>>(
+      future: firestore.getPlatformStats(),
+      builder: (context, statsSnap) {
+        final stats = statsSnap.data ??
+            {'seekers': 0, 'companies': 0, 'jobs': 0, 'applications': 0};
 
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: 4,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Platform Overview', style: AppTextStyles.headline3),
+              const SizedBox(height: 16),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
-                crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 1,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.4,
+                children: [
+                  _tile(Icons.person, 'Seekers', '${stats['seekers']}'),
+                  _tile(Icons.business, 'Companies', '${stats['companies']}'),
+                  _tile(Icons.work, 'Jobs', '${stats['jobs']}'),
+                  _tile(Icons.assignment, 'Apps', '${stats['applications']}'),
+                ],
               ),
-              itemBuilder: (context, index) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-
-                      const Icon(Icons.work, color: Colors.blue, size: 40),
-
-                      const SizedBox(height: 10),
-
-                      Text(
-                        "Job ${index + 1}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+              Text('All Jobs', style: AppTextStyles.headline4),
+              const SizedBox(height: 12),
+              StreamBuilder<List<JobModel>>(
+                stream: firestore.jobsStream(),
+                builder: (context, snap) {
+                  final jobs = snap.data ?? [];
+                  if (jobs.isEmpty) return const Text('No jobs');
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: jobs.length,
+                    itemBuilder: (context, i) {
+                      final job = jobs[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
+                          leading: SizedBox(
+                            width: 56,
+                            child: JobBannerImage(
+                              imageUrl: job.imageUrl,
+                              category: job.category,
+                              height: 56,
+                            ),
+                          ),
+                          title: Text(job.title),
+                          subtitle: Text(job.companyName ?? ''),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete,
+                                color: AppColors.errorColor),
+                            onPressed: () => firestore.deleteJob(job.jobId),
+                          ),
                         ),
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      Text(
-                        index % 2 == 0 ? "Active" : "Closed",
-                        style: TextStyle(
-                          color: index % 2 == 0
-                              ? Colors.green
-                              : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      );
+        );
+      },
+    );
+  }
+
+  Widget _tile(IconData icon, String label, String value) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.primaryColor),
+            const Spacer(),
+            Text(value, style: AppTextStyles.headline3),
+            Text(label, style: AppTextStyles.bodySmall),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -82,7 +82,7 @@ class Signup extends StatelessWidget {
                   style: AppTextStyles.bodySmall,
                 ),
                 GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/Login'),
+                  onTap: () => Navigator.pushNamed(context, '/login'),
                   child: const Text(
                     AppStrings.login,
                     style: TextStyle(
@@ -99,4 +99,3 @@ class Signup extends StatelessWidget {
     );
   }
 }
-             

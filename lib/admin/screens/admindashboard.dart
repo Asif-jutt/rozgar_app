@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/admin_body.dart';
-import '../widgets/bottomnavigation.dart';
 import '../widgets/drawer_admin.dart';
+import '../widgets/bottomnavigation.dart';
 
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
@@ -9,17 +9,12 @@ class AdminDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-
       appBar: AppBar(
-        title: const Text("Admin Dashboard"),
-        centerTitle: true,
-        backgroundColor: Colors.black,
+        title: const Text('Admin Dashboard'),
       ),
-
-      body: AdminBody(),
-      drawer: AdminDrawer(),
-      bottomNavigationBar: const BottomNavigation(),
+      drawer: const AdminDrawer(),
+      body: const AdminBody(),
+      bottomNavigationBar: AdminBottomNav(currentIndex: 0),
     );
   }
 }

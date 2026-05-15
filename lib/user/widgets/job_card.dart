@@ -1,179 +1,122 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/models/job_model.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/user/models/job_model.dart';
+import 'package:rozgar/widgets/network_image_widget.dart';
 
 class JobCard extends StatelessWidget {
-  final Job job;
+  final JobModel job;
   final VoidCallback onApplyPressed;
   final VoidCallback onCardPressed;
 
   const JobCard({
-    Key? key,
+    super.key,
     required this.job,
     required this.onApplyPressed,
     required this.onCardPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: AppDimensions.cardElevation,
+      clipBehavior: Clip.antiAlias,
+      elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
       ),
       child: InkWell(
         onTap: onCardPressed,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Job Title
-              Text(
-                job.jobTitle,
-                style: AppTextStyles.headline4,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.verticalSpaceSmall),
-
-              // Company Name
-              Text(
-                job.companyName,
-                style: AppTextStyles.labelMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.verticalSpaceMedium),
-
-              // Location and Salary Row
-              Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            JobBannerImage(
+              imageUrl: job.imageUrl,
+              category: job.category,
+              height: 120,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: AppDimensions.iconSmall,
-                          color: AppColors.primaryColor,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          job.title,
+                          style: AppTextStyles.headline4,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            job.location,
-                            style: AppTextStyles.labelSmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondaryColor.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          job.category,
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.primaryDark,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    job.companyName ?? 'Company',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.currency_rupee,
-                          size: AppDimensions.iconSmall,
-                          color: AppColors.successColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            job.salary,
-                            style: AppTextStyles.labelSmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 16, color: AppColors.primaryColor),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(job.location, style: AppTextStyles.bodySmall),
+                      ),
+                      const Icon(Icons.payments,
+                          size: 16, color: AppColors.successColor),
+                      const SizedBox(width: 4),
+                      Text(job.salary, style: AppTextStyles.labelSmall),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: job.requirementList
+                        .take(3)
+                        .map(
+                          (s) => Chip(
+                            label: Text(s, style: const TextStyle(fontSize: 11)),
+                            visualDensity: VisualDensity.compact,
+                            backgroundColor:
+                                AppColors.primaryLight.withValues(alpha: 0.1),
                           ),
-                        ),
-                      ],
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onApplyPressed,
+                      child: const Text(AppStrings.applyNow),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.verticalSpaceSmall),
-
-              // Job Type Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusSmall,
-                  ),
-                  border: Border.all(color: AppColors.primaryColor, width: 0.5),
-                ),
-                child: Text(
-                  job.jobType,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.verticalSpaceMedium),
-
-              // Skills
-              Wrap(
-                spacing: 4,
-                runSpacing: 4,
-                children: job.requiredSkills
-                    .take(3)
-                    .map(
-                      (skill) => Chip(
-                        label: Text(
-                          skill,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        backgroundColor: AppColors.secondaryColor.withOpacity(
-                          0.2,
-                        ),
-                        labelStyle: const TextStyle(
-                          color: AppColors.primaryColor,
-                          fontSize: 11,
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-              if (job.requiredSkills.length > 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    '+${job.requiredSkills.length - 3} more',
-                    style: AppTextStyles.labelSmall,
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.verticalSpaceMedium),
-
-              // Apply Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onApplyPressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusMedium,
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppDimensions.paddingSmall,
-                    ),
-                  ),
-                  child: const Text(
-                    AppStrings.applyNow,
-                    style: AppTextStyles.buttonText,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

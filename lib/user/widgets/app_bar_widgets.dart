@@ -161,7 +161,7 @@ class UserDrawer extends StatelessWidget {
             title: AppStrings.home,
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/home');
+              Navigator.pushNamed(context, '/user_home');
             },
           ),
           _buildDrawerItem(
@@ -170,7 +170,7 @@ class UserDrawer extends StatelessWidget {
             title: "Admin",
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/admin');
+              Navigator.pushNamed(context, '/admin_dashboard');
             },
           ),
           _buildDrawerItem(
@@ -179,7 +179,7 @@ class UserDrawer extends StatelessWidget {
             title: "Company",
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushNamed(context, '/dashboard');
+              Navigator.pushNamed(context, '/company_dashboard');
             },
           ),
           _buildDrawerItem(

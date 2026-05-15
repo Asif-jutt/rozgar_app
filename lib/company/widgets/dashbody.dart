@@ -1,127 +1,103 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../models/data.dart';
+import 'package:rozgar/models/job_model.dart';
+import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
+import 'package:rozgar/widgets/network_image_widget.dart';
 
 class DashboardBody extends StatelessWidget {
   const DashboardBody({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const Center(child: Text('Please log in'));
 
-        // Search
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: "Search Applicants",
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
+    final firestore = FirestoreService();
 
-        // Applicants Title
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            "Applicants",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
+    return StreamBuilder<List<JobModel>>(
+      stream: firestore.companyJobsStream(uid),
+      builder: (context, jobSnap) {
+        return StreamBuilder(
+          stream: firestore.companyApplicationsStream(uid),
+          builder: (context, appSnap) {
+            final jobs = jobSnap.data ?? [];
+            final apps = appSnap.data ?? [];
 
-        const SizedBox(height: 10),
-
-        // Applicants Grid
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: applicants.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.9,
-            ),
-            itemBuilder: (context, index) {
-              final app = applicants[index];
-
-              return Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Company Dashboard', style: AppTextStyles.headline3),
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 25,
-                        child: Icon(Icons.person),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        app.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(app.role),
-                      Text(app.experience),
+                      _stat(Icons.work, 'Jobs', '${jobs.length}'),
+                      const SizedBox(width: 12),
+                      _stat(Icons.people, 'Applicants', '${apps.length}'),
                     ],
                   ),
-                ),
-              );
-            },
+                  const SizedBox(height: 24),
+                  Text('Your Listings', style: AppTextStyles.headline4),
+                  const SizedBox(height: 12),
+                  if (jobs.isEmpty)
+                    const Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('No jobs posted yet. Tap Post to add one.'),
+                      ),
+                    )
+                  else
+                    ...jobs.map((job) => Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              JobBannerImage(
+                                imageUrl: job.imageUrl,
+                                category: job.category,
+                                height: 100,
+                              ),
+                              ListTile(
+                                title: Text(job.title),
+                                subtitle: Text('${job.location} • ${job.salary}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete,
+                                      color: AppColors.errorColor),
+                                  onPressed: () =>
+                                      firestore.deleteJob(job.jobId),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _stat(IconData icon, String label, String value) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: AppColors.primaryColor),
+              const SizedBox(height: 8),
+              Text(value, style: AppTextStyles.headline3),
+              Text(label, style: AppTextStyles.bodySmall),
+            ],
           ),
         ),
-
-        const SizedBox(height: 20),
-
-        // Jobs Title
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            "Active Jobs",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        // Jobs Row
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Row(
-            children: jobs.map((job) {
-              return Expanded(
-                child: Card(
-                  margin: const EdgeInsets.only(right: 10,bottom: 10),
-                  elevation: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Column(
-                      children: [
-                        Text(
-                          job.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(job.company),
-                        Text(job.type),
-                        
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

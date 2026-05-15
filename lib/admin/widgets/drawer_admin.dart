@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:rozgar/core/auth_helper.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
 
 class AdminDrawer extends StatelessWidget {
   const AdminDrawer({super.key});
@@ -9,59 +11,48 @@ class AdminDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-
-          const UserAccountsDrawerHeader(
-            accountName: Text('Admin'),
-            accountEmail: Text('admin@rozgar.com'),
-            currentAccountPicture: CircleAvatar(
-              child: Icon(Icons.admin_panel_settings),
+          const DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.primaryDark),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.admin_panel_settings,
+                    color: Colors.white, size: 48),
+                SizedBox(height: 8),
+                Text(
+                  'Admin Panel',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-
           ListTile(
             leading: const Icon(Icons.dashboard),
             title: const Text('Dashboard'),
             onTap: () {
-              Navigator.pushNamed(context, "/admin" );
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/admin_dashboard');
             },
           ),
-
-          ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Home'),
-            onTap: () { 
-              Navigator.pushNamed(context, "/home");
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.business),
-            title: const Text('Manage Company'),
-            onTap: () {
-              Navigator.pushNamed(context, "/user-manage");
-            },
-          ),
-
           ListTile(
             leading: const Icon(Icons.people),
-            title: const Text('Users Manage'),
+            title: const Text('Manage Users'),
             onTap: () {
-              Navigator.pushNamed(context, "/users-manage");
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/user-manages');
             },
           ),
-
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('Manage Applicants'),
-            onTap: () {},
-          ),
-
           const Divider(),
-
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () {},
+            leading: const Icon(Icons.logout, color: AppColors.errorColor),
+            title: const Text('Logout',
+                style: TextStyle(color: AppColors.errorColor)),
+            onTap: () => AuthHelper.logout(context),
           ),
         ],
       ),

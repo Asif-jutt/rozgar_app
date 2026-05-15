@@ -1,9 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rozgar/core/app_images.dart';
+import 'package:rozgar/models/job_model.dart';
+import 'package:rozgar/services/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/user/models/job_model.dart';
+import 'package:rozgar/user/screens/job_details/job_details.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
+import 'package:rozgar/user/widgets/drawer.dart';
 import 'package:rozgar/user/widgets/job_card.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,209 +19,160 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final FirestoreService _firestore = FirestoreService();
+  final TextEditingController _searchController = TextEditingController();
   int _selectedBottomNavIndex = 0;
-  List<Job> jobs = [];
+  String _searchQuery = '';
   String _selectedLocation = 'All';
+  String _selectedCategory = 'All';
 
   @override
-  void initState() {
-    super.initState();
-    _generateSampleJobs();
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  void _generateSampleJobs() {
-    jobs = [
-      Job(
-        id: '1',
-        jobTitle: 'Flutter Developer',
-        companyName: 'Tech Solutions Inc',
-        location: 'Karachi',
-        salary: '100k - 150k',
-        requiredSkills: ['Flutter', 'Dart', 'Firebase', 'REST API'],
-        description: 'We are looking for an experienced Flutter developer...',
-        postedDate: DateTime.now().subtract(const Duration(days: 2)),
-        jobType: 'Full-time',
-      ),
-      Job(
-        id: '2',
-        jobTitle: 'Mobile App Developer',
-        companyName: 'Digital Agency',
-        location: 'Lahore',
-        salary: '80k - 120k',
-        requiredSkills: ['React Native', 'JavaScript', 'Redux'],
-        description: 'Join our dynamic team of mobile developers...',
-        postedDate: DateTime.now().subtract(const Duration(days: 5)),
-        jobType: 'Full-time',
-      ),
-      Job(
-        id: '3',
-        jobTitle: 'UI/UX Designer',
-        companyName: 'Creative Studio',
-        location: 'Islamabad',
-        salary: '60k - 90k',
-        requiredSkills: ['Figma', 'UI Design', 'Prototyping'],
-        description: 'Design beautiful user interfaces for our apps...',
-        postedDate: DateTime.now().subtract(const Duration(days: 1)),
-        jobType: 'Part-time',
-      ),
-      Job(
-        id: '4',
-        jobTitle: 'Backend Developer',
-        companyName: 'Cloud Systems',
-        location: 'Karachi',
-        salary: '120k - 180k',
-        requiredSkills: ['Node.js', 'MongoDB', 'AWS', 'Docker'],
-        description: 'Build scalable backend solutions...',
-        postedDate: DateTime.now().subtract(const Duration(days: 3)),
-        jobType: 'Full-time',
-      ),
-      Job(
-        id: '5',
-        jobTitle: 'QA Tester',
-        companyName: 'Quality Assurance Ltd',
-        location: 'Lahore',
-        salary: '50k - 70k',
-        requiredSkills: ['Manual Testing', 'Automation', 'Selenium'],
-        description: 'Ensure quality of our software products...',
-        postedDate: DateTime.now(),
-        jobType: 'Full-time',
-      ),
-      Job(
-        id: '6',
-        jobTitle: 'Data Analyst',
-        companyName: 'Analytics Pro',
-        location: 'Karachi',
-        salary: '90k - 140k',
-        requiredSkills: ['Python', 'SQL', 'Tableau', 'Excel'],
-        description: 'Analyze data and generate insights...',
-        postedDate: DateTime.now().subtract(const Duration(days: 7)),
-        jobType: 'Full-time',
-      ),
-    ];
+  List<JobModel> _filter(List<JobModel> jobs) {
+    final q = _searchQuery.trim().toLowerCase();
+    return jobs.where((job) {
+      if (_selectedLocation != 'All' && job.location != _selectedLocation) {
+        return false;
+      }
+      if (_selectedCategory != 'All' && job.category != _selectedCategory) {
+        return false;
+      }
+      if (q.isEmpty) return true;
+      final hay =
+          '${job.title} ${job.companyName} ${job.location} ${job.category}'
+              .toLowerCase();
+      return hay.contains(q);
+    }).toList();
   }
 
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(AppStrings.location),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Wrap(
-                spacing: 8,
-                children: ['All', 'Karachi', 'Lahore', 'Islamabad']
-                    .map(
-                      (location) => ChoiceChip(
-                        label: Text(location),
-                        selected: _selectedLocation == location,
-                        onSelected: (selected) {
-                          setState(() => _selectedLocation = location);
-                          Navigator.pop(context);
-                        },
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
+  Future<void> _applyToJob(JobModel job) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
+    try {
+      if (await _firestore.hasUserApplied(userId: user.uid, jobId: job.jobId)) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You already applied to this job.')),
         );
-      },
-    );
+        return;
+      }
+
+      final profile = await _firestore.getUserProfile(user.uid);
+      final userDoc = await _firestore.getUser(user.uid);
+      final resumeText = profile?.cvResumeUrl ?? '';
+
+      await _firestore.applyToJob(
+        jobId: job.jobId,
+        userId: user.uid,
+        companyId: job.companyId,
+        jobTitle: job.title,
+        applicantName: userDoc?.name ?? user.displayName ?? 'Applicant',
+        resumeText: resumeText,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Applied to ${job.title}'),
+          backgroundColor: AppColors.successColor,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: AppStrings.home,
+      appBar: AppBar(
+        title: const Text(AppStrings.findJobs),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No new notifications')),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.login),
-            onPressed: () {
-              Navigator.pushNamed(context, '/Login');
-            },
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
           ),
         ],
       ),
-      drawer: UserDrawer(
-        userName: 'John Doe',
-        userEmail: 'john@example.com',
-        onLogout: () {
-          Navigator.pushReplacementNamed(context, '/Login');
-        },
-      ),
+      drawer: const SeekerDrawer(),
       body: Column(
         children: [
-          // Search Bar
-          CustomSearchBar(
-            hintText: AppStrings.search,
-            onFilterPressed: _showFilterDialog,
-          ),
-
-          // Filters
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMedium,
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChip(
-                    label: Text(AppStrings.location),
-                    onSelected: (_) => _showFilterDialog(),
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: const Text('Salary: All'),
-                    onSelected: (_) {},
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
-                    label: const Text('Job Type: All'),
-                    onSelected: (_) {},
-                  ),
-                ],
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: CustomSearchBar(
+              controller: _searchController,
+              hintText: AppStrings.search,
+              onChanged: (v) => setState(() => _searchQuery = v),
+              onFilterPressed: _showFilters,
             ),
           ),
-          const SizedBox(height: AppSpacing.verticalSpaceMedium),
-
-          // Job Grid
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.55,
-                crossAxisSpacing: AppSpacing.horizontalSpaceMedium,
-                mainAxisSpacing: AppSpacing.verticalSpaceMedium,
-              ),
-              itemCount: jobs.length,
-              itemBuilder: (context, index) {
-                return JobCard(
-                  job: jobs[index],
-                  onApplyPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Applied to ${jobs[index].jobTitle}'),
-                      ),
-                    );
-                  },
-                  onCardPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Viewing ${jobs[index].jobTitle}'),
+            child: StreamBuilder<List<JobModel>>(
+              stream: _firestore.jobsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final all = snapshot.data ?? [];
+                final jobs = _filter(all);
+                if (jobs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: CachedNetworkImage(
+                            imageUrl: AppImages.emptyJobs,
+                            width: 200,
+                            height: 140,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text('No jobs found', style: AppTextStyles.headline4),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try changing filters or check back later',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: jobs.length,
+                  itemBuilder: (context, i) {
+                    final job = jobs[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: JobCard(
+                        job: job,
+                        onApplyPressed: () => _applyToJob(job),
+                        onCardPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => JobDetailsScreen(job: job),
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -229,11 +186,10 @@ class _HomeState extends State<Home> {
         currentIndex: _selectedBottomNavIndex,
         items: [
           NavigationItem(icon: Icons.home, label: AppStrings.home),
-          NavigationItem(icon: Icons.work, label: AppStrings.myJobs),
-          NavigationItem(icon: Icons.message, label: AppStrings.messages),
+          NavigationItem(icon: Icons.assignment, label: AppStrings.myApplications),
+          NavigationItem(icon: Icons.person, label: AppStrings.profile),
         ],
         onTap: (index) {
-          setState(() => _selectedBottomNavIndex = index);
           switch (index) {
             case 0:
               break;
@@ -241,12 +197,38 @@ class _HomeState extends State<Home> {
               Navigator.pushNamed(context, '/myapplication');
               break;
             case 2:
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Messages feature coming soon')),
-              );
+              Navigator.pushNamed(context, '/myprofile');
               break;
           }
         },
+      ),
+    );
+  }
+
+  void _showFilters() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Filters', style: AppTextStyles.headline4),
+            const SizedBox(height: 16),
+            const Text('Location'),
+            const SizedBox(height: 8),
+            Text('Use search bar for quick filter. Location: $_selectedLocation'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
       ),
     );
   }
