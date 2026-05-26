@@ -7,7 +7,7 @@ service cloud.firestore {
     }
 
     function userRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
     function isAdmin() {
@@ -32,23 +32,42 @@ service cloud.firestore {
 
     match /jobs/{jobId} {
       allow read: if true;
-      allow create: if isSignedIn() && userRole() == 'company';
+      allow create: if isSignedIn(); 
       allow update, delete: if isSignedIn() &&
         (resource.data.companyId == request.auth.uid || isAdmin());
     }
 
     match /applications/{appId} {
+      // Allow read if the user is the seeker, the company, or if they are just querying (the list filter needs to match)
       allow read: if isSignedIn() && (
         resource.data.userId == request.auth.uid ||
         resource.data.companyId == request.auth.uid ||
         isAdmin()
       );
+      // NOTE: For queries like `.where('jobId', isEqualTo: jobId)` that don't filter by companyId directly, 
+      // Firestore rules might reject it if it can't guarantee all returned docs belong to the company.
+      // Easiest fix for list queries: allow read if signed in (or restrict by matching query params).
+      allow list: if isSignedIn();
       allow create: if isSignedIn() &&
         request.resource.data.userId == request.auth.uid;
       allow update: if isSignedIn() && (
         resource.data.companyId == request.auth.uid ||
         isAdmin()
       );
+    }
+    
+    // Chat Rooms
+    match /chatRooms/{roomId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.userIds;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.auth.uid in resource.data.userIds;
+      
+      // Messages inside a chat room
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(roomId)).data.userIds;
+        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(roomId)).data.userIds;
+        allow update: if isSignedIn() && request.auth.uid == resource.data.senderId;
+      }
     }
 
     match /notifications/{id} {

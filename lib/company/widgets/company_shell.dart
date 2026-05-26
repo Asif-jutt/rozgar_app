@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/company/widgets/drawer_company.dart';
+import 'package:rozgar/user/widgets/notification_badge.dart';
+import 'package:rozgar/user/screens/chat/inbox_screen.dart';
 
 class CompanyShell extends StatelessWidget {
   final String title;
@@ -24,7 +26,16 @@ class CompanyShell extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const NotificationBadgeIcon(),
             onPressed: () =>
                 Navigator.pushNamed(context, '/company-notifications'),
           ),
@@ -54,13 +65,12 @@ class CompanyShell extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.post_add), label: 'Post'),
-          NavigationDestination(
-            icon: Icon(Icons.people),
-            label: 'Applicants',
-          ),
+          NavigationDestination(icon: Icon(Icons.people), label: 'Applicants'),
           NavigationDestination(icon: Icon(Icons.business), label: 'Profile'),
         ],
       ),
     );
   }
 }
+
+

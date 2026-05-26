@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/job_model.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/company/models/job_model.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/user/widgets/network_image_widget.dart';
 
 class AdminBody extends StatelessWidget {
   const AdminBody({super.key});
@@ -102,3 +102,5 @@ class AdminBody extends StatelessWidget {
     );
   }
 }
+
+

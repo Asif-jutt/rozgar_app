@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/app_user.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/models/app_user.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/user/widgets/network_image_widget.dart';
 
 class UserBody extends StatefulWidget {
   const UserBody({super.key});
@@ -81,3 +81,5 @@ class _UserBodyState extends State<UserBody> {
     );
   }
 }
+
+

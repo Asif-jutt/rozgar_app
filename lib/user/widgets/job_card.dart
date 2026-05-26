@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/job_model.dart';
+import 'package:rozgar/company/models/job_model.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/user/widgets/network_image_widget.dart';
+
+import 'package:intl/intl.dart';
 
 class JobCard extends StatelessWidget {
   final JobModel job;
@@ -68,11 +70,24 @@ class JobCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    job.companyName ?? 'Company',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        job.companyName ?? 'Company',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (job.postedAt != null)
+                        Text(
+                          DateFormat('MMM dd, hh:mm a').format(job.postedAt!.toLocal()),
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -106,6 +121,42 @@ class JobCard extends StatelessWidget {
                         .toList(),
                   ),
                   const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // TODO: Add Like Interaction Logic
+                          },
+                          icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+                          label: Text(
+                            'Like',
+                            style: TextStyle(color: AppColors.primaryColor),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // TODO: Add Comment Interaction Logic
+                          },
+                          icon: const Icon(Icons.comment_outlined, size: 18),
+                          label: Text(
+                            'Comment',
+                            style: TextStyle(color: AppColors.primaryColor),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.primaryColor.withValues(alpha: 0.5)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -122,3 +173,5 @@ class JobCard extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/application_model.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/models/application_model.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/drawer.dart';
@@ -146,3 +146,4 @@ class _MyapplicationState extends State<Myapplication> {
   String _formatDate(DateTime d) =>
       '${d.day}/${d.month}/${d.year}';
 }
+

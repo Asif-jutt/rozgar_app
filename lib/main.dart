@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:rozgar/app.dart';
-import 'package:rozgar/services/notification_service.dart';
+import 'package:rozgar/user/providers/notification_service.dart';
+import 'package:rozgar/core/encryption_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -25,7 +26,12 @@ Future<void> main() async {
     return;
   }
 
-  // FCM can hang or fail on web without a service worker — never block UI.
+  try {
+    await EncryptionService.init();
+  } catch (e) {
+    debugPrint('Encryption init failed: $e');
+  }
+
   if (!kIsWeb) {
     try {
       await NotificationService().initialize();

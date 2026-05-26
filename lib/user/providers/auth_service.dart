@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rozgar/models/app_user.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/models/app_user.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

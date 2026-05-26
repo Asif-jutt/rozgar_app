@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rozgar/core/app_images.dart';
-import 'package:rozgar/models/app_user.dart';
-import 'package:rozgar/models/application_model.dart';
-import 'package:rozgar/models/job_model.dart';
-import 'package:rozgar/models/user_profile_model.dart';
+import 'package:rozgar/user/models/app_user.dart';
+import 'package:rozgar/user/models/application_model.dart';
+import 'package:rozgar/company/models/job_model.dart';
+import 'package:rozgar/user/models/user_profile_model.dart';
+
+import 'package:rozgar/user/providers/notification_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -89,9 +91,10 @@ class FirestoreService {
         .collection('jobs')
         .orderBy('postedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => JobModel.fromMap(d.id, d.data()))
-            .toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => JobModel.fromMap(d.id, d.data())).toList(),
+        );
   }
 
   Stream<List<JobModel>> companyJobsStream(String companyId) {
@@ -100,9 +103,10 @@ class FirestoreService {
         .where('companyId', isEqualTo: companyId)
         .orderBy('postedAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => JobModel.fromMap(d.id, d.data()))
-            .toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => JobModel.fromMap(d.id, d.data())).toList(),
+        );
   }
 
   Future<List<JobModel>> getAllJobs() async {
@@ -144,9 +148,11 @@ class FirestoreService {
         .where('userId', isEqualTo: userId)
         .orderBy('appliedDate', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+              .toList(),
+        );
   }
 
   /// Stream: applicants for a specific job (company view).
@@ -156,9 +162,11 @@ class FirestoreService {
         .where('jobId', isEqualTo: jobId)
         .orderBy('appliedDate', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+              .toList(),
+        );
   }
 
   Stream<List<ApplicationModel>> companyApplicationsStream(String companyId) {
@@ -167,9 +175,26 @@ class FirestoreService {
         .where('companyId', isEqualTo: companyId)
         .orderBy('appliedDate', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
-            .toList());
+        .map(
+          (snap) => snap.docs
+              .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+              .toList(),
+        );
+  }
+
+  // applications by job id
+  Stream<List<ApplicationModel>> jobApplicationsStream(String jobId) {
+    return _db
+        .collection('applications')
+        .where('jobId', isEqualTo: jobId)
+        .snapshots()
+        .map((snap) {
+          final apps = snap.docs
+              .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+              .toList();
+          apps.sort((a, b) => b.appliedDate.compareTo(a.appliedDate));
+          return apps;
+        });
   }
 
   Future<List<ApplicationModel>> getApplicationsByCompany(
@@ -240,6 +265,10 @@ class FirestoreService {
     required String jobTitle,
     required String applicantName,
     required String resumeText,
+    String? university,
+    String? semester,
+    String? email,
+    String? phone,
   }) async {
     final app = ApplicationModel(
       appId: '',
@@ -251,8 +280,22 @@ class FirestoreService {
       resumeText: resumeText,
       applicantName: applicantName,
       jobTitle: jobTitle,
+      university: university,
+      semester: semester,
+      email: email,
+      phone: phone,
     );
     final id = await createApplication(app);
+
+    // Notify the company that a user has applied
+    await NotificationService().sendNotification(
+      userId: companyId,
+      title: 'New Job Application',
+      body: '$applicantName has applied to "$jobTitle".',
+      type: 'application',
+      relatedId: id,
+    );
+
     return ApplicationModel(
       appId: id,
       jobId: jobId,
@@ -263,8 +306,13 @@ class FirestoreService {
       resumeText: resumeText,
       applicantName: applicantName,
       jobTitle: jobTitle,
+      university: university,
+      semester: semester,
+      email: email,
+      phone: phone,
     );
   }
 
-  String defaultJobImage(String category) => AppImages.jobImageForCategory(category);
+  String defaultJobImage(String category) =>
+      AppImages.jobImageForCategory(category);
 }

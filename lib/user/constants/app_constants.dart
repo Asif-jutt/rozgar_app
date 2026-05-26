@@ -75,7 +75,7 @@ class AppStrings {
   static const String search = 'Search jobs...';
 
   // Status
-  static const String applied_status = 'Applied';
+  static const String appliedStatus = 'Applied';
   static const String underReview = 'Under Review';
   static const String interview = 'Interview';
   static const String rejected = 'Rejected';

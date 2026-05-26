@@ -10,6 +10,9 @@ class JobModel {
   final String? companyName;
   final String? imageUrl;
   final DateTime? postedAt;
+  final List<String> likes;
+  final int impressions;
+  final int commentsCount;
 
   const JobModel({
     required this.jobId,
@@ -36,16 +39,19 @@ class JobModel {
       requirements: map['requirements'] is List
           ? (map['requirements'] as List).join(', ')
           : (map['requiredSkills'] is List
-              ? (map['requiredSkills'] as List).join(', ')
-              : (map['requirements'] ?? '').toString()),
+                ? (map['requiredSkills'] as List).join(', ')
+                : (map['requirements'] ?? '').toString()),
       category: map['category'] ?? map['jobType'] ?? 'General',
       companyName: map['companyName'],
       imageUrl: map['imageUrl'],
       postedAt: map['postedAt'] != null
           ? DateTime.tryParse(map['postedAt'].toString())
           : (map['postedDate'] != null
-              ? DateTime.tryParse(map['postedDate'].toString())
-              : null),
+                ? DateTime.tryParse(map['postedDate'].toString())
+                : null),
+      likes: map['likes'] is List ? List<String>.from(map['likes']) : [],
+      impressions: map['impressions'] ?? 0,
+      commentsCount: map['commentsCount'] ?? 0,
     );
   }
 
@@ -62,6 +68,9 @@ class JobModel {
       if (companyName != null) 'companyName': companyName,
       if (imageUrl != null) 'imageUrl': imageUrl,
       'postedAt': (postedAt ?? DateTime.now()).toIso8601String(),
+      'likes': likes,
+      'impressions': impressions,
+      'commentsCount': commentsCount,
     };
   }
 

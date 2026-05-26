@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/application_model.dart';
-import 'package:rozgar/services/firestore_service.dart';
-import 'package:rozgar/services/notification_service.dart';
+import 'package:rozgar/user/models/application_model.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
+import 'package:rozgar/user/providers/notification_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/company/widgets/company_shell.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/user/widgets/network_image_widget.dart';
+import 'package:rozgar/user/screens/chat/chat_screen.dart';
+import 'package:rozgar/company/screens/applicant_profile_view.dart';
 
 class ManageApplicantsPage extends StatefulWidget {
   const ManageApplicantsPage({super.key});
@@ -55,94 +57,174 @@ class _ManageApplicantsPageState extends State<ManageApplicantsPage> {
                       height: 48,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        children: ['All', 'Pending', 'Reviewed', 'Accepted', 'Rejected']
-                            .map((s) => Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: FilterChip(
-                                    label: Text(s),
-                                    selected: _filter == s,
-                                    onSelected: (_) => setState(() => _filter = s),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        children:
+                            [
+                                  'All',
+                                  'Pending',
+                                  'Reviewed',
+                                  'Accepted',
+                                  'Rejected',
+                                ]
+                                .map(
+                                  (s) => Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: FilterChip(
+                                      label: Text(s),
+                                      selected: _filter == s,
+                                      onSelected: (_) =>
+                                          setState(() => _filter = s),
+                                    ),
                                   ),
-                                ))
-                            .toList(),
+                                )
+                                .toList(),
                       ),
                     ),
                     Expanded(
                       child: apps.isEmpty
                           ? const Center(child: Text('No applicants yet'))
                           : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: apps.length,
-                  itemBuilder: (context, i) {
-                    final app = apps[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                ProfileAvatar(
-                                  fallbackText: app.applicantName ?? 'A',
-                                  radius: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        app.applicantName ?? 'Applicant',
-                                        style: AppTextStyles.labelLarge,
-                                      ),
-                                      Text(
-                                        app.jobTitle ?? 'Job',
-                                        style: AppTextStyles.bodySmall,
-                                      ),
-                                    ],
+                              padding: const EdgeInsets.all(16),
+                              itemCount: apps.length,
+                              itemBuilder: (context, i) {
+                                final app = apps[i];
+                                return Card(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        ApplicantProfileView(
+                                                          userId: app.userId,
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                              child: ProfileAvatar(
+                                                fallbackText:
+                                                    app.applicantName ?? 'A',
+                                                radius: 24,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          ApplicantProfileView(
+                                                            userId: app.userId,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      app.applicantName ??
+                                                          'Applicant',
+                                                      style: AppTextStyles
+                                                          .labelLarge,
+                                                    ),
+                                                    Text(
+                                                      app.jobTitle ?? 'Job',
+                                                      style: AppTextStyles
+                                                          .bodySmall,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            _chip(app.status),
+                                          ],
+                                        ),
+                                        if (app.resumeText.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Resume: ${app.resumeText}',
+                                            style: AppTextStyles.labelSmall,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            IconButton(
+                                              onPressed: () {
+                                                final currentUid = FirebaseAuth
+                                                    .instance
+                                                    .currentUser
+                                                    ?.uid;
+                                                if (currentUid == null) return;
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => ChatScreen(
+                                                      currentUserId: currentUid,
+                                                      otherUserId: app.userId,
+                                                      otherUserName:
+                                                          app.applicantName ??
+                                                          'Applicant',
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                Icons.chat,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                              style: IconButton.styleFrom(
+                                                backgroundColor: AppColors
+                                                    .primaryColor
+                                                    .withValues(alpha: 0.1),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: OutlinedButton(
+                                                onPressed: () => _updateStatus(
+                                                  app,
+                                                  'Rejected',
+                                                ),
+                                                child: const Text('Reject'),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: ElevatedButton(
+                                                onPressed: () => _updateStatus(
+                                                  app,
+                                                  'Accepted',
+                                                ),
+                                                child: const Text('Accept'),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                _chip(app.status),
-                              ],
+                                );
+                              },
                             ),
-                            if (app.resumeText.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Resume: ${app.resumeText}',
-                                style: AppTextStyles.labelSmall,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () =>
-                                        _updateStatus(app, 'Rejected'),
-                                    child: const Text('Reject'),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () =>
-                                        _updateStatus(app, 'Accepted'),
-                                    child: const Text('Accept'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
                     ),
                   ],
                 );

@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -114,3 +114,4 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
+

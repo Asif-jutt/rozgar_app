@@ -1,14 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:rozgar/core/app_images.dart';
-import 'package:rozgar/models/job_model.dart';
-import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/company/models/job_model.dart';
+import 'package:rozgar/user/providers/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/screens/job_details/job_details.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
 import 'package:rozgar/user/widgets/drawer.dart';
 import 'package:rozgar/user/widgets/job_card.dart';
+import 'package:rozgar/user/screens/chat/inbox_screen.dart';
+import 'package:rozgar/user/widgets/notification_badge.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class Home extends StatefulWidget {
@@ -88,9 +90,9 @@ class _HomeState extends State<Home> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -101,7 +103,16 @@ class _HomeState extends State<Home> {
         title: const Text(AppStrings.findJobs),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InboxScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const NotificationBadgeIcon(),
             onPressed: () => Navigator.pushNamed(context, '/notifications'),
           ),
         ],
@@ -186,7 +197,10 @@ class _HomeState extends State<Home> {
         currentIndex: _selectedBottomNavIndex,
         items: [
           NavigationItem(icon: Icons.home, label: AppStrings.home),
-          NavigationItem(icon: Icons.assignment, label: AppStrings.myApplications),
+          NavigationItem(
+            icon: Icons.assignment,
+            label: AppStrings.myApplications,
+          ),
           NavigationItem(icon: Icons.person, label: AppStrings.profile),
         ],
         onTap: (index) {
@@ -221,7 +235,9 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 16),
             const Text('Location'),
             const SizedBox(height: 8),
-            Text('Use search bar for quick filter. Location: $_selectedLocation'),
+            Text(
+              'Use search bar for quick filter. Location: $_selectedLocation',
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
@@ -233,3 +249,6 @@ class _HomeState extends State<Home> {
     );
   }
 }
+
+
+

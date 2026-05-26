@@ -8,6 +8,12 @@ class ApplicationModel {
   final String resumeText;
   final String? applicantName;
   final String? jobTitle;
+  
+  // New fields
+  final String? university;
+  final String? semester;
+  final String? email;
+  final String? phone;
 
   const ApplicationModel({
     required this.appId,
@@ -19,6 +25,10 @@ class ApplicationModel {
     required this.resumeText,
     this.applicantName,
     this.jobTitle,
+    this.university,
+    this.semester,
+    this.email,
+    this.phone,
   });
 
   factory ApplicationModel.fromMap(String id, Map<String, dynamic> map) {
@@ -32,6 +42,10 @@ class ApplicationModel {
       resumeText: map['resumeText'] ?? map['resumeUrl'] ?? '',
       applicantName: map['applicantName'],
       jobTitle: map['jobTitle'],
+      university: map['university'],
+      semester: map['semester'],
+      email: map['email'],
+      phone: map['phone'],
     );
   }
 
@@ -46,6 +60,10 @@ class ApplicationModel {
       'resumeText': resumeText,
       if (applicantName != null) 'applicantName': applicantName,
       if (jobTitle != null) 'jobTitle': jobTitle,
+      if (university != null) 'university': university,
+      if (semester != null) 'semester': semester,
+      if (email != null) 'email': email,
+      if (phone != null) 'phone': phone,
     };
   }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/screens/splash_screen.dart';
-import 'package:rozgar/screens/auth/login_screen.dart';
-import 'package:rozgar/screens/auth/signup_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:rozgar/user/providers/chat_provider.dart';
+import 'package:rozgar/user/screens/splash_screen.dart';
+import 'package:rozgar/user/screens/chat/inbox_screen.dart';
+import 'package:rozgar/user/screens/auth/login_screen.dart';
+import 'package:rozgar/user/screens/auth/signup_screen.dart';
 import 'package:rozgar/user/screens/BuildProfile/BuildProfile.dart';
 import 'package:rozgar/user/screens/home/home.dart';
 import 'package:rozgar/user/screens/MyApplication/Myapplication.dart';
@@ -22,8 +25,12 @@ class Rozgar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
       title: 'Rozgar - Job Portal',
       theme: ThemeData(
         useMaterial3: true,
@@ -100,9 +107,12 @@ class Rozgar extends StatelessWidget {
         '/post-jobs': (context) => const PostJobsPage(),
         '/company-profile': (context) => const CompanyProfilePage(),
         '/manage-applicants': (context) => const ManageApplicantsPage(),
+          '/inbox': (context) => const InboxScreen(),
         '/admin_dashboard': (context) => const AdminDashboardPage(),
         '/user-manages': (context) => const UsersManageScreen(),
       },
-    );
+    ));
   }
 }
+
+

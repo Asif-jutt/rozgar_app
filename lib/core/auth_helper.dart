@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/services/auth_service.dart';
+import 'package:rozgar/user/providers/auth_service.dart';
 
 class AuthHelper {
   static final AuthService _auth = AuthService();
@@ -18,3 +18,4 @@ class AuthHelper {
     return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 }
+
