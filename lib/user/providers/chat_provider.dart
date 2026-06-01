@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/message_model.dart';
 import 'package:rozgar/core/encryption_service.dart';
+import 'package:rozgar/user/providers/notification_service.dart';
 
 class ChatProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -63,6 +64,15 @@ class ChatProvider extends ChangeNotifier {
         .doc(roomId)
         .collection('messages')
         .add(message.toMap());
+
+    // Send a push notification (internal notification model system)
+    await NotificationService().sendNotification(
+      userId: otherUserId,
+      title: 'New Message',
+      body: content.length > 30 ? "\${content.substring(0, 30)}..." : content,
+      type: 'message',
+      relatedId: currentUserId,
+    );
   }
 
   String _getChatRoomId(String userId1, String userId2) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rozgar/user/widgets/job_comments_section.dart';
 import 'package:rozgar/company/models/job_model.dart';
 import 'package:rozgar/user/models/application_model.dart';
 import 'package:rozgar/user/providers/firestore_service.dart';
@@ -104,6 +106,41 @@ class CompanyJobDetailsPage extends StatelessWidget {
                         color: Colors.grey[800],
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    StreamBuilder<DocumentSnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('jobs')
+                          .doc(job.jobId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        int likes = job.likes.length;
+                        int views = job.impressions;
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data =
+                              snapshot.data!.data() as Map<String, dynamic>;
+                          final List currentLikes = data['likes'] ?? [];
+                          likes = currentLikes.length;
+                          views = data['impressions'] ?? 0;
+                        }
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '\u2764\uFE0F $likes Likes',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '\uD83D\uDC41\uFE0F $views Views',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -115,6 +152,8 @@ class CompanyJobDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  JobCommentsSection(jobId: job.jobId, isCompany: true),
+                  const SizedBox(height: 24),
                   const Text('Applicants', style: AppTextStyles.headline2),
                   const SizedBox(height: 16),
                   StreamBuilder<List<ApplicationModel>>(
@@ -244,6 +283,61 @@ class CompanyJobDetailsPage extends StatelessWidget {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.assignment),
+                                    color: AppColors.primaryColor,
+                                    tooltip: 'View Application Data',
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text('Application Details'),
+                                          content: SingleChildScrollView(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Name: ${app.applicantName ?? 'N/A'}',
+                                                ),
+                                                Text(
+                                                  'Email: ${app.email ?? 'N/A'}',
+                                                ),
+                                                Text(
+                                                  'Phone: ${app.phone ?? 'N/A'}',
+                                                ),
+                                                Text(
+                                                  'University: ${app.university ?? 'N/A'}',
+                                                ),
+                                                Text(
+                                                  'Semester: ${app.semester ?? 'N/A'}',
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Text(
+                                                  'Resume/Details:',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  app.resumeText.isEmpty
+                                                      ? 'No resume provided'
+                                                      : app.resumeText,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text('Close'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.chat_bubble_outline),
                                     color: Colors.blue,

@@ -3,11 +3,63 @@ import 'package:rozgar/core/app_images.dart';
 import 'package:rozgar/user/models/app_user.dart';
 import 'package:rozgar/user/models/application_model.dart';
 import 'package:rozgar/company/models/job_model.dart';
+import 'package:rozgar/company/models/comment_model.dart';
 import 'package:rozgar/user/models/user_profile_model.dart';
-
 import 'package:rozgar/user/providers/notification_service.dart';
 
 class FirestoreService {
+  Future<void> incrementJobImpression(String jobId) async {
+    try {
+      await _db.collection('jobs').doc(jobId).update({
+        'impressions': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Error incrementing impression: $e');
+    }
+  }
+
+  Future<void> toggleJobLike(String jobId, String userId) async {
+    final doc = await _db.collection('jobs').doc(jobId).get();
+    if (doc.exists) {
+      List likes = doc.data()?['likes'] ?? [];
+      if (likes.contains(userId)) {
+        await doc.reference.update({
+          'likes': FieldValue.arrayRemove([userId]),
+        });
+      } else {
+        await doc.reference.update({
+          'likes': FieldValue.arrayUnion([userId]),
+        });
+      }
+    }
+  }
+
+  Future<void> addJobComment(
+    String jobId,
+    String userId,
+    String userName,
+    String text,
+  ) async {
+    await _db.collection('jobs').doc(jobId).collection('comments').add({
+      'userId': userId,
+      'userName': userName,
+      'text': text,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    await _db.collection('jobs').doc(jobId).update({
+      'commentsCount': FieldValue.increment(1),
+    });
+  }
+
+  Stream<QuerySnapshot> getJobComments(String jobId) {
+    return _db
+        .collection('jobs')
+        .doc(jobId)
+        .collection('comments')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // ─── USERS ───────────────────────────────────────────────────────────────
@@ -85,7 +137,6 @@ class FirestoreService {
     await _db.collection('jobs').doc(jobId).delete();
   }
 
-  /// Stream: all jobs (newest first).
   Stream<List<JobModel>> jobsStream() {
     return _db
         .collection('jobs')
@@ -117,6 +168,65 @@ class FirestoreService {
     return snap.docs.map((d) => JobModel.fromMap(d.id, d.data())).toList();
   }
 
+  // ─── LIKES ────────────────────────────────────────────────────────────────
+
+  Future<void> toggleLike(String jobId, String userId) async {
+    final ref = _db.collection('jobs').doc(jobId);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (!snap.exists) return;
+      final likes = List<String>.from(snap.data()?['likes'] ?? []);
+      if (likes.contains(userId)) {
+        likes.remove(userId);
+      } else {
+        likes.add(userId);
+      }
+      tx.update(ref, {'likes': likes});
+    });
+  }
+
+  // ─── COMMENTS ─────────────────────────────────────────────────────────────
+
+  Future<void> addComment(String jobId, CommentModel comment) async {
+    final batch = _db.batch();
+    final commentRef = _db
+        .collection('jobs')
+        .doc(jobId)
+        .collection('comments')
+        .doc();
+    batch.set(commentRef, comment.toMap());
+    // increment commentsCount
+    batch.update(_db.collection('jobs').doc(jobId), {
+      'commentsCount': FieldValue.increment(1),
+    });
+    await batch.commit();
+  }
+
+  Future<void> deleteComment(String jobId, String commentId) async {
+    final batch = _db.batch();
+    batch.delete(
+      _db.collection('jobs').doc(jobId).collection('comments').doc(commentId),
+    );
+    batch.update(_db.collection('jobs').doc(jobId), {
+      'commentsCount': FieldValue.increment(-1),
+    });
+    await batch.commit();
+  }
+
+  Stream<List<CommentModel>> commentsStream(String jobId) {
+    return _db
+        .collection('jobs')
+        .doc(jobId)
+        .collection('comments')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => CommentModel.fromMap(d.id, d.data()))
+              .toList(),
+        );
+  }
+
   // ─── APPLICATIONS ─────────────────────────────────────────────────────────
 
   Future<String> createApplication(ApplicationModel application) async {
@@ -141,7 +251,6 @@ class FirestoreService {
     await _db.collection('applications').doc(appId).update({'status': status});
   }
 
-  /// Stream: applications for a specific user (seeker).
   Stream<List<ApplicationModel>> userApplicationsStream(String userId) {
     return _db
         .collection('applications')
@@ -155,7 +264,6 @@ class FirestoreService {
         );
   }
 
-  /// Stream: applicants for a specific job (company view).
   Stream<List<ApplicationModel>> jobApplicantsStream(String jobId) {
     return _db
         .collection('applications')
@@ -182,7 +290,6 @@ class FirestoreService {
         );
   }
 
-  // applications by job id
   Stream<List<ApplicationModel>> jobApplicationsStream(String jobId) {
     return _db
         .collection('applications')
@@ -210,7 +317,7 @@ class FirestoreService {
         .toList();
   }
 
-  // ─── NOTIFICATIONS (in-app, Firestore only) ────────────────────────────────
+  // ─── NOTIFICATIONS ─────────────────────────────────────────────────────────
 
   Future<void> sendNotification({
     required String userId,
@@ -287,7 +394,6 @@ class FirestoreService {
     );
     final id = await createApplication(app);
 
-    // Notify the company that a user has applied
     await NotificationService().sendNotification(
       userId: companyId,
       title: 'New Job Application',

@@ -5,6 +5,7 @@ class UserProfileModel {
   final String education;
   final String experience;
   final String? profileImageUrl;
+  final String? phone;
   final String? cvResumeUrl;
 
   const UserProfileModel({
@@ -14,6 +15,7 @@ class UserProfileModel {
     required this.education,
     required this.experience,
     this.profileImageUrl,
+    this.phone,
     this.cvResumeUrl,
   });
 
@@ -31,6 +33,7 @@ class UserProfileModel {
               : ''),
       experience: map['experience'] ?? '',
       profileImageUrl: map['profileImageUrl'],
+      phone: map['phone'] ?? '',
       cvResumeUrl: map['cvResumeUrl'] ?? map['cvUrl'],
     );
   }
@@ -44,6 +47,7 @@ class UserProfileModel {
       'experience': experience,
       if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       if (cvResumeUrl != null) 'cvResumeUrl': cvResumeUrl,
+      if (phone != null) 'phone': phone,
     };
   }
 
@@ -53,7 +57,9 @@ class UserProfileModel {
     String? education,
     String? experience,
     String? profileImageUrl,
+
     String? cvResumeUrl,
+    String? phone,
   }) {
     return UserProfileModel(
       userId: userId,
@@ -63,6 +69,7 @@ class UserProfileModel {
       experience: experience ?? this.experience,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       cvResumeUrl: cvResumeUrl ?? this.cvResumeUrl,
+      phone: phone ?? this.phone,
     );
   }
 }

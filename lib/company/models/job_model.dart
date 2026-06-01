@@ -26,6 +26,9 @@ class JobModel {
     this.companyName,
     this.imageUrl,
     this.postedAt,
+    this.likes = const [],
+    this.impressions = 0,
+    this.commentsCount = 0,
   });
 
   factory JobModel.fromMap(String id, Map<String, dynamic> map) {
@@ -79,4 +82,27 @@ class JobModel {
       .map((s) => s.trim())
       .where((s) => s.isNotEmpty)
       .toList();
+
+  JobModel copyWith({
+    List<String>? likes,
+    int? impressions,
+    int? commentsCount,
+  }) {
+    return JobModel(
+      jobId: jobId,
+      companyId: companyId,
+      title: title,
+      description: description,
+      salary: salary,
+      location: location,
+      requirements: requirements,
+      category: category,
+      companyName: companyName,
+      imageUrl: imageUrl,
+      postedAt: postedAt,
+      likes: likes ?? this.likes,
+      impressions: impressions ?? this.impressions,
+      commentsCount: commentsCount ?? this.commentsCount,
+    );
+  }
 }

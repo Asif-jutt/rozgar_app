@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:rozgar/company/models/job_model.dart';
 import 'package:rozgar/user/providers/firestore_service.dart';
@@ -7,6 +8,8 @@ import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
 import 'package:rozgar/user/screens/chat/chat_screen.dart';
 import 'package:rozgar/user/widgets/network_image_widget.dart';
+
+import 'package:rozgar/user/widgets/job_comments_section.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final JobModel job;
@@ -21,6 +24,16 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   final FirestoreService _firestore = FirestoreService();
   bool _isApplying = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _recordImpression();
+  }
+
+  Future<void> _recordImpression() async {
+    await _firestore.incrementJobImpression(widget.job.jobId);
+  }
+
   void _showApplyForm() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -28,11 +41,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       return;
     }
 
-    if (await _firestore.hasUserApplied(userId: user.uid, jobId: widget.job.jobId)) {
+    if (await _firestore.hasUserApplied(
+      userId: user.uid,
+      jobId: widget.job.jobId,
+    )) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Already applied.'))
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Already applied.')));
       return;
     }
 
@@ -42,13 +58,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     final _formKey = GlobalKey<FormState>();
     String name = userDoc?.name ?? '';
     String email = userDoc?.email ?? '';
-    String phone = '';
+    String phone = profile?.phone ?? '';
     String university = '';
     String semester = '';
     String resumeLink = profile?.cvResumeUrl ?? '';
 
     if (!mounted) return;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -56,7 +72,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16, right: 16, top: 16
+            left: 16,
+            right: 16,
+            top: 16,
           ),
           child: Form(
             key: _formKey,
@@ -69,38 +87,56 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     initialValue: name,
-                    decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => name = v ?? '',
                     validator: (v) => v!.isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     initialValue: email,
-                    decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => email = v ?? '',
                     validator: (v) => v!.isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     initialValue: phone,
-                    decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Phone',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => phone = v ?? '',
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'University', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'University',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => university = v ?? '',
                     validator: (v) => v!.isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Semester', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Semester',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => semester = v ?? '',
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     initialValue: resumeLink,
-                    decoration: const InputDecoration(labelText: 'Resume Link (Drive/Drive)', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                      labelText: 'Resume Link (Drive/Drive)',
+                      border: OutlineInputBorder(),
+                    ),
                     onSaved: (v) => resumeLink = v ?? '',
                   ),
                   const SizedBox(height: 16),
@@ -109,7 +145,15 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
                         Navigator.pop(context); // close sheet
-                        await _processApply(user.uid, name, email, phone, university, semester, resumeLink);
+                        await _processApply(
+                          user.uid,
+                          name,
+                          email,
+                          phone,
+                          university,
+                          semester,
+                          resumeLink,
+                        );
                       }
                     },
                     child: const Text('Submit Application'),
@@ -120,12 +164,19 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             ),
           ),
         );
-      }
+      },
     );
   }
 
   Future<void> _processApply(
-      String uid, String name, String email, String phone, String university, String semester, String resumeLink) async {
+    String uid,
+    String name,
+    String email,
+    String phone,
+    String university,
+    String semester,
+    String resumeLink,
+  ) async {
     setState(() => _isApplying = true);
     try {
       await _firestore.applyToJob(
@@ -150,7 +201,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isApplying = false);
     }
@@ -206,6 +259,75 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         .map((s) => Chip(label: Text(s)))
                         .toList(),
                   ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('jobs')
+                            .doc(job.jobId)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          int likesCount = job.likes.length;
+                          bool isLiked = false;
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            final List currentLikes = data['likes'] ?? [];
+                            likesCount = currentLikes.length;
+                            final uid = FirebaseAuth.instance.currentUser?.uid;
+                            if (uid != null) {
+                              isLiked = currentLikes.contains(uid);
+                            }
+                          }
+                          return Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  isLiked
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isLiked ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () {
+                                  final uid =
+                                      FirebaseAuth.instance.currentUser?.uid;
+                                  if (uid == null) {
+                                    Navigator.pushNamed(context, '/login');
+                                    return;
+                                  }
+                                  _firestore.toggleJobLike(job.jobId, uid);
+                                },
+                              ),
+                              Text(
+                                '$likesCount Likes',
+                                style: AppTextStyles.labelMedium,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const Spacer(),
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('jobs')
+                            .doc(job.jobId)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          int views = job.impressions;
+                          if (snapshot.hasData && snapshot.data!.exists) {
+                            final data =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            views = data['impressions'] ?? 0;
+                          }
+                          return Text(
+                            '$views Views',
+                            style: AppTextStyles.labelMedium,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 32),
                   Row(
                     children: [
@@ -213,7 +335,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         child: CustomButton(
                           text: AppStrings.applyNow,
                           isLoading: _isApplying,
-                          onPressed: _apply,
+                          onPressed:  _showApplyForm,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -250,6 +372,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 32),
+                  JobCommentsSection(jobId: job.jobId, isCompany: false),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -277,6 +402,3 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 }
-
-
-
