@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:rozgar/company/models/job_model.dart';
 import 'package:rozgar/user/models/application_model.dart';
-import 'package:rozgar/user/providers/firestore_service.dart';
-
+import 'package:rozgar/shared/services/firestore_service.dart';
 class CompanyProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   bool _isLoading = false;
