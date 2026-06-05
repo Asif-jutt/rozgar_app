@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:rozgar/shared/constants/firebase_constants.dart';
@@ -13,26 +14,56 @@ class NotificationService {
   final _local = FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    await _local.initialize(
-      const InitializationSettings(android: android),
-      onDidReceiveNotificationResponse: _onTap,
-    );
+    if (!kIsWeb) {
+      const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+      await _local.initialize(
+        const InitializationSettings(android: android),
+        onDidReceiveNotificationResponse: _onTap,
+      );
+    } else {
+      AppLogger.i('Skipping local notifications plugin on web');
+    }
 
-    await _fcm.requestPermission(alert: true, badge: true, sound: true);
+    try {
+      await _fcm.requestPermission(alert: true, badge: true, sound: true);
+    } catch (e, st) {
+      AppLogger.w('FCM permission request skipped: $e');
+      AppLogger.e('FCM permission', st);
+    }
+
     FirebaseMessaging.onMessage.listen(_handleForeground);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleTap);
 
-    final initial = await _fcm.getInitialMessage();
-    if (initial != null) _handleTap(initial);
+    try {
+      final initial = await _fcm.getInitialMessage();
+      if (initial != null) _handleTap(initial);
+    } catch (e, st) {
+      AppLogger.e('FCM initial message', st);
+    }
   }
 
-  Future<String?> getToken() => _fcm.getToken();
+  Future<String?> getToken() async {
+    try {
+      return await _fcm.getToken();
+    } catch (e, st) {
+      AppLogger.w('FCM token unavailable on this platform');
+      AppLogger.e('FCM getToken', st);
+      return null;
+    }
+  }
 
   void _handleForeground(RemoteMessage message) {
     final notification = message.notification;
     if (notification == null) return;
-    final channel = message.data['type'] == 'job_match' ? 'jobs' : 'applications';
+
+    if (kIsWeb) {
+      AppLogger.i('FCM foreground (web): ${notification.title}');
+      _saveToFirestore(message);
+      return;
+    }
+
+    final channel =
+        message.data['type'] == 'job_match' ? 'jobs' : 'applications';
     _local.show(
       notification.hashCode,
       notification.title,

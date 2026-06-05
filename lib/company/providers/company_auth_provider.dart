@@ -1,11 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:get/get.dart';
 import 'package:rozgar/company/models/company_model.dart';
 import 'package:rozgar/shared/constants/firebase_constants.dart';
 import 'package:rozgar/user/constants/app_routes.dart';
-import 'package:rozgar/user/models/user_model.dart';
-import 'package:rozgar/user/providers/user_auth_provider.dart';
+import 'package:rozgar/user/providers/auth_provider.dart';
 
 class CompanyAuthProvider extends GetxController {
   static CompanyAuthProvider get to => Get.find();
@@ -19,7 +18,7 @@ class CompanyAuthProvider extends GetxController {
   }
 
   Future<void> loadCompany() async {
-    final uid = UserAuthProvider.to.currentUser.value?.uid;
+    final uid = AuthProvider.to.currentUser.value?.uid;
     if (uid == null) return;
     final doc = await FirebaseFirestore.instance
         .collection(FirebaseCollections.companies)
@@ -42,7 +41,7 @@ class CompanyAuthProvider extends GetxController {
   }
 
   void ensureEmployerRole() {
-    final user = UserAuthProvider.to.currentUser.value;
+    final user = AuthProvider.to.currentUser.value;
     if (user?.role != 'employer') {
       Get.offAllNamed(AppRoutes.login);
     }

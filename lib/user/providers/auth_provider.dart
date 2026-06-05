@@ -2,6 +2,7 @@ export 'user_auth_provider.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -17,6 +18,27 @@ class AuthProvider extends GetxController {
   RxBool isLoading = false.obs;
   RxString errorMessage = ''.obs;
 
+  GoogleSignIn? _googleSignIn;
+
+  /// Whether Google Sign-In is configured for the current platform.
+  bool get isGoogleSignInAvailable {
+    if (!kIsWeb) return true;
+    final clientId = _googleWebClientId;
+    return clientId != null &&
+        clientId.isNotEmpty &&
+        !clientId.startsWith('your_');
+  }
+
+  String? get _googleWebClientId =>
+      dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? dotenv.env['GOOGLE_CLIENT_ID'];
+
+  GoogleSignIn get _googleSignInInstance {
+    _googleSignIn ??= GoogleSignIn(
+      clientId: kIsWeb ? _googleWebClientId : null,
+    );
+    return _googleSignIn!;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -24,50 +46,55 @@ class AuthProvider extends GetxController {
   }
 
   Future<void> _onAuthStateChanged(User? firebaseUser) async {
-    if (firebaseUser == null) {
-      currentUser.value = null;
-      AppLogger.currentRole = 'USER';
-      AppLogger.i('Auth state: signed out');
-      if (Get.currentRoute != AppRoutes.login &&
-          Get.currentRoute != AppRoutes.onboarding &&
-          Get.currentRoute != AppRoutes.register &&
-          Get.currentRoute != AppRoutes.roleSelect &&
-          Get.currentRoute != AppRoutes.splash) {
-        Get.offAllNamed(AppRoutes.login);
+    try {
+      if (firebaseUser == null) {
+        currentUser.value = null;
+        AppLogger.currentRole = 'USER';
+        AppLogger.i('Auth state: signed out');
+        if (Get.currentRoute != AppRoutes.login &&
+            Get.currentRoute != AppRoutes.onboarding &&
+            Get.currentRoute != AppRoutes.register &&
+            Get.currentRoute != AppRoutes.roleSelect &&
+            Get.currentRoute != AppRoutes.splash) {
+          Get.offAllNamed(AppRoutes.login);
+        }
+        return;
       }
-      return;
-    }
 
-    final doc = await FirebaseFirestore.instance
-        .collection(FirebaseCollections.users)
-        .doc(firebaseUser.uid)
-        .get();
-    FirestoreReadCounter.increment();
+      final doc = await FirebaseFirestore.instance
+          .collection(FirebaseCollections.users)
+          .doc(firebaseUser.uid)
+          .get();
+      FirestoreReadCounter.increment();
 
-    if (!doc.exists) {
-      currentUser.value = null;
-      Get.offAllNamed(AppRoutes.roleSelect);
-      return;
-    }
+      if (!doc.exists) {
+        currentUser.value = null;
+        Get.offAllNamed(AppRoutes.roleSelect);
+        return;
+      }
 
-    final user = UserModel.fromFirestore(doc);
-    currentUser.value = user;
-    AppLogger.currentRole = user.role;
-    AppLogger.i('Auth state: signed in as ${user.role}');
+      final user = UserModel.fromFirestore(doc);
+      currentUser.value = user;
+      AppLogger.currentRole = user.role;
+      AppLogger.i('Auth state: signed in as ${user.role}');
 
-    switch (user.role) {
-      case 'employer':
-        if (Get.currentRoute != AppRoutes.companyHome) {
-          Get.offAllNamed(AppRoutes.companyHome);
-        }
-      case 'admin':
-        if (Get.currentRoute != AppRoutes.adminDashboard) {
-          Get.offAllNamed(AppRoutes.adminDashboard);
-        }
-      default:
-        if (Get.currentRoute != AppRoutes.userFeed) {
-          Get.offAllNamed(AppRoutes.userFeed);
-        }
+      switch (user.role) {
+        case 'employer':
+          if (Get.currentRoute != AppRoutes.companyHome) {
+            Get.offAllNamed(AppRoutes.companyHome);
+          }
+        case 'admin':
+          if (Get.currentRoute != AppRoutes.adminDashboard) {
+            Get.offAllNamed(AppRoutes.adminDashboard);
+          }
+        default:
+          if (Get.currentRoute != AppRoutes.userFeed) {
+            Get.offAllNamed(AppRoutes.userFeed);
+          }
+      }
+    } catch (e, st) {
+      AppLogger.e('Auth state change error', st);
+      errorMessage.value = 'Failed to load user profile. Please try again.';
     }
   }
 
@@ -121,10 +148,15 @@ class AuthProvider extends GetxController {
   }
 
   Future<void> signInWithGoogle() async {
+    if (!isGoogleSignInAvailable) {
+      errorMessage.value =
+          'Google Sign-In is not configured for web. Use email and password.';
+      return;
+    }
     isLoading.value = true;
     errorMessage.value = '';
     try {
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser = await _googleSignInInstance.signIn();
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -143,6 +175,9 @@ class AuthProvider extends GetxController {
       }
     } on FirebaseAuthException catch (e) {
       errorMessage.value = _friendlyAuthError(e);
+    } catch (e) {
+      AppLogger.e('Google sign-in error', StackTrace.current);
+      errorMessage.value = 'Google Sign-In failed. Please try again.';
     } finally {
       isLoading.value = false;
     }
@@ -150,7 +185,9 @@ class AuthProvider extends GetxController {
 
   Future<void> signOut() async {
     await FirebaseAuth.instance.signOut();
-    await GoogleSignIn().signOut();
+    if (isGoogleSignInAvailable) {
+      await _googleSignInInstance.signOut();
+    }
     currentUser.value = null;
     Get.offAllNamed(AppRoutes.login);
   }

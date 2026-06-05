@@ -42,6 +42,9 @@ class _SplashScreenState extends State<SplashScreen>
       Get.offAllNamed(
         onboardingDone ? AppRoutes.login : AppRoutes.onboarding,
       );
+    } else {
+      // AuthProvider routes by role; fallback to feed if listener hasn't fired.
+      Get.offAllNamed(AppRoutes.userFeed);
     }
   }
 

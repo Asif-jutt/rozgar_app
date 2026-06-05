@@ -1,156 +1,163 @@
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart'
+    as permission_handler;
 import 'package:rozgar/shared/constants/firebase_constants.dart';
 
-/// Service for managing device permissions with graceful error handling
-/// Handles runtime permissions for camera, microphone, storage, location, etc.
+/// Service for managing device permissions with graceful error handling.
 class PermissionService {
-  /// Requests camera permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestCameraPermission() async {
+  static permission_handler.PermissionStatus _webGranted() =>
+      permission_handler.PermissionStatus.granted;
+
+  static Future<permission_handler.PermissionStatus> requestCameraPermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.camera.request();
+      final status = await permission_handler.Permission.camera.request();
       _logPermissionStatus('Camera', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting camera permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests microphone permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestMicrophonePermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestMicrophonePermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.microphone.request();
+      final status = await permission_handler.Permission.microphone.request();
       _logPermissionStatus('Microphone', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting microphone permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests storage permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestStoragePermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestStoragePermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.storage.request();
+      final status = await permission_handler.Permission.storage.request();
       _logPermissionStatus('Storage', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting storage permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests location permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestLocationPermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestLocationPermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.location.request();
+      final status = await permission_handler.Permission.location.request();
       _logPermissionStatus('Location', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting location permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests location permission (always/when in use)
-  /// Returns the permission status
-  static Future<PermissionStatus> requestLocationWhenInUsePermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestLocationWhenInUsePermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.locationWhenInUse.request();
+      final status =
+          await permission_handler.Permission.locationWhenInUse.request();
       _logPermissionStatus('Location (When In Use)', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting location when in use permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests contacts permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestContactsPermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestContactsPermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.contacts.request();
+      final status = await permission_handler.Permission.contacts.request();
       _logPermissionStatus('Contacts', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting contacts permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Requests calendar permission
-  /// Returns the permission status
-  static Future<PermissionStatus> requestCalendarPermission() async {
+  static Future<permission_handler.PermissionStatus>
+      requestCalendarPermission() async {
+    if (kIsWeb) return _webGranted();
     try {
-      final status = await Permission.calendar.request();
+      final status = await permission_handler.Permission.calendar.request();
       _logPermissionStatus('Calendar', status);
       return status;
     } catch (e, st) {
       AppLogger.e('Error requesting calendar permission', st);
-      return PermissionStatus.denied;
+      return permission_handler.PermissionStatus.denied;
     }
   }
 
-  /// Checks if camera permission is granted
   static Future<bool> isCameraPermissionGranted() async {
+    if (kIsWeb) return true;
     try {
-      final status = await Permission.camera.status;
+      final status = await permission_handler.Permission.camera.status;
       return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// Checks if microphone permission is granted
   static Future<bool> isMicrophonePermissionGranted() async {
+    if (kIsWeb) return true;
     try {
-      final status = await Permission.microphone.status;
+      final status = await permission_handler.Permission.microphone.status;
       return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// Checks if storage permission is granted
   static Future<bool> isStoragePermissionGranted() async {
+    if (kIsWeb) return true;
     try {
-      final status = await Permission.storage.status;
+      final status = await permission_handler.Permission.storage.status;
       return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// Checks if location permission is granted
   static Future<bool> isLocationPermissionGranted() async {
+    if (kIsWeb) return true;
     try {
-      final status = await Permission.location.status;
+      final status = await permission_handler.Permission.location.status;
       return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// Checks if contacts permission is granted
   static Future<bool> isContactsPermissionGranted() async {
+    if (kIsWeb) return true;
     try {
-      final status = await Permission.contacts.status;
+      final status = await permission_handler.Permission.contacts.status;
       return status.isGranted;
     } catch (e) {
       return false;
     }
   }
 
-  /// Requests multiple permissions at once
-  /// [permissions]: List of permissions to request
-  /// Returns a map of permission to its status
-  static Future<Map<Permission, PermissionStatus>> requestMultiplePermissions(
-    List<Permission> permissions,
+  static Future<Map<permission_handler.Permission,
+      permission_handler.PermissionStatus>> requestMultiplePermissions(
+    List<permission_handler.Permission> permissions,
   ) async {
+    if (kIsWeb) {
+      return {
+        for (final p in permissions) p: _webGranted(),
+      };
+    }
     try {
       final statuses = await permissions.request();
       statuses.forEach((permission, status) {
@@ -163,47 +170,51 @@ class PermissionService {
     }
   }
 
-  /// Opens app settings to allow user to grant denied permissions
   static Future<void> openAppSettings() async {
+    if (kIsWeb) return;
     try {
-      await openAppSettings();
+      await permission_handler.openAppSettings();
       AppLogger.i('Opened app settings');
     } catch (e, st) {
       AppLogger.e('Error opening app settings', st);
     }
   }
 
-  /// Checks if permission is permanently denied
-  /// User must go to settings to enable
   static Future<bool> isPermissionPermanentlyDenied(
-    Permission permission,
+    permission_handler.Permission permission,
   ) async {
+    if (kIsWeb) return false;
     try {
       final status = await permission.status;
-      return status.isDenied;
+      return status.isPermanentlyDenied;
     } catch (e) {
       return false;
     }
   }
 
-  /// Gets human-readable status description
-  static String getStatusDescription(PermissionStatus status) {
+  static String getStatusDescription(
+    permission_handler.PermissionStatus status,
+  ) {
     switch (status) {
-      case PermissionStatus.granted:
+      case permission_handler.PermissionStatus.granted:
         return 'Permission granted';
-      case PermissionStatus.denied:
+      case permission_handler.PermissionStatus.denied:
         return 'Permission denied';
-      case PermissionStatus.permanentlyDenied:
+      case permission_handler.PermissionStatus.permanentlyDenied:
         return 'Permission permanently denied - please enable in settings';
-      case PermissionStatus.restricted:
+      case permission_handler.PermissionStatus.restricted:
         return 'Permission restricted';
-      case PermissionStatus.limited:
+      case permission_handler.PermissionStatus.limited:
         return 'Permission limited';
+      case permission_handler.PermissionStatus.provisional:
+        return 'Permission provisional';
     }
   }
 
-  /// Logs permission request result
-  static void _logPermissionStatus(String name, PermissionStatus status) {
+  static void _logPermissionStatus(
+    String name,
+    permission_handler.PermissionStatus status,
+  ) {
     final statusStr = status.toString().split('.').last;
     AppLogger.i('Permission: $name → $statusStr');
   }

@@ -103,7 +103,9 @@ void callbackDispatcher() {
 Future<void> _initNotifications() async {
   try {
     await NotificationService.instance.initialize();
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
     AppLogger.i('Notification services initialized');
   } catch (e, st) {
     AppLogger.e('Failed to initialize notifications', st);
@@ -146,7 +148,7 @@ Future<void> _initEncryption() async {
     AppLogger.i('Encryption service initialized');
   } catch (e, st) {
     AppLogger.e('Failed to initialize encryption', st);
-    rethrow;
+    if (!kIsWeb) rethrow;
   }
 }
 
@@ -158,12 +160,15 @@ Future<void> _initFirebase() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Configure error reporting
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
+    // Crashlytics is mobile-only; web uses console logging via AppLogger
+    if (!kIsWeb) {
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    }
 
     AppLogger.i('Firebase initialized successfully');
   } catch (e, st) {
@@ -255,6 +260,10 @@ void _initGetXProviders() {
 
 /// Initializes advertisement service for monetization
 Future<void> _initAdService() async {
+  if (!AdService.instance.isSupported) {
+    AppLogger.i('Skipping ad service on unsupported platform');
+    return;
+  }
   try {
     await AdService.instance.init();
     AppLogger.i('Ad service initialized');
@@ -298,7 +307,9 @@ Future<void> main() async {
     },
     (error, stack) {
       AppLogger.e('Uncaught exception in main', stack);
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      if (!kIsWeb) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      }
     },
   );
 }

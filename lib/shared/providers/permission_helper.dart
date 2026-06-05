@@ -1,20 +1,25 @@
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart'
+    as permission_handler;
 import 'package:rozgar/user/constants/app_strings.dart';
 
 class PermissionHelper {
   static Future<bool> requestStorage() async {
-    PermissionStatus status = await Permission.storage.request();
+    if (kIsWeb) return true;
+
+    permission_handler.PermissionStatus status =
+        await permission_handler.Permission.storage.request();
     if (!status.isGranted) {
-      status = await Permission.photos.request();
+      status = await permission_handler.Permission.photos.request();
     }
     if (!status.isGranted) {
       Get.snackbar(
         'Permission needed',
         AppStrings.storageRationale,
         mainButton: TextButton(
-          onPressed: openAppSettings,
+          onPressed: permission_handler.openAppSettings,
           child: const Text('Settings'),
         ),
       );
@@ -23,13 +28,15 @@ class PermissionHelper {
   }
 
   static Future<bool> requestCamera() async {
-    final status = await Permission.camera.request();
+    if (kIsWeb) return true;
+
+    final status = await permission_handler.Permission.camera.request();
     if (!status.isGranted) {
       Get.snackbar(
         'Permission needed',
         AppStrings.cameraRationale,
         mainButton: TextButton(
-          onPressed: openAppSettings,
+          onPressed: permission_handler.openAppSettings,
           child: const Text('Settings'),
         ),
       );
@@ -38,12 +45,17 @@ class PermissionHelper {
   }
 
   static Future<bool> requestNotification() async {
-    final status = await Permission.notification.request();
+    if (kIsWeb) return true;
+
+    final status = await permission_handler.Permission.notification.request();
     return status.isGranted;
   }
 
   static Future<bool> requestLocation() async {
-    final status = await Permission.locationWhenInUse.request();
+    if (kIsWeb) return true;
+
+    final status =
+        await permission_handler.Permission.locationWhenInUse.request();
     if (!status.isGranted) {
       Get.snackbar('Permission needed', AppStrings.locationRationale);
     }

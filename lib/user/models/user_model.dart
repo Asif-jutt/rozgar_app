@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rozgar/shared/constants/firebase_constants.dart';
+import 'package:rozgar/shared/utils/firestore_parsers.dart';
 
 class UserModel {
   final String uid;
@@ -98,8 +99,9 @@ class UserModel {
     return UserModel(
       uid: doc.id,
       email: d['email'] as String? ?? '',
-      displayName: d['displayName'] as String?,
-      photoUrl: d['photoUrl'] as String?,
+      displayName:
+          d['displayName'] as String? ?? d['fullName'] as String?,
+      photoUrl: d['photoUrl'] as String? ?? d['profileImageUrl'] as String?,
       role: d['role'] as String? ?? 'jobSeeker',
       phoneEncrypted: d['phoneEncrypted'] as String?,
       cnicEncrypted: d['cnicEncrypted'] as String?,
@@ -111,7 +113,7 @@ class UserModel {
       education: d['education'] as String?,
       isActive: d['isActive'] as bool? ?? true,
       isPremium: d['isPremium'] as bool? ?? false,
-      createdAt: d['createdAt'] as Timestamp?,
+      createdAt: parseFirestoreTimestamp(d['createdAt']),
       fcmToken: d['fcmToken'] as String?,
     );
   }

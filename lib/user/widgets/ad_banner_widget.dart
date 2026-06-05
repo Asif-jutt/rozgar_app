@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -18,7 +19,9 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void initState() {
     super.initState();
-    _loadAd();
+    if (AdService.instance.isSupported) {
+      _loadAd();
+    }
   }
 
   void _loadAd() {
@@ -49,11 +52,32 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
     super.dispose();
   }
 
+  Widget _webAdPlaceholder() {
+    return Container(
+      height: 60,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade400),
+      ),
+      child: const Center(
+        child: Text(
+          'Advertisement — Upgrade to Premium to remove ads',
+          style: TextStyle(color: Colors.grey, fontSize: 12),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       if (AuthProvider.to.currentUser.value?.isPremium == true) {
         return const SizedBox.shrink();
+      }
+      if (!AdService.instance.isSupported) {
+        return kIsWeb ? _webAdPlaceholder() : const SizedBox.shrink();
       }
       if (!_loaded || _banner == null) return const SizedBox.shrink();
       return SizedBox(

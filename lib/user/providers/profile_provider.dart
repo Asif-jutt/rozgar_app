@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,7 +11,7 @@ import 'package:rozgar/shared/constants/firebase_constants.dart';
 import 'package:rozgar/shared/providers/cloudinary_provider.dart';
 import 'package:rozgar/shared/providers/permission_helper.dart';
 import 'package:rozgar/user/models/user_model.dart';
-import 'package:rozgar/user/providers/user_auth_provider.dart';
+import 'package:rozgar/user/providers/auth_provider.dart';
 
 class ProfileProvider extends GetxController {
   static ProfileProvider get to => Get.find();
@@ -28,7 +28,7 @@ class ProfileProvider extends GetxController {
   }
 
   Future<void> loadProfile() async {
-    final uid = UserAuthProvider.to.currentUser.value?.uid;
+    final uid = AuthProvider.to.currentUser.value?.uid;
     if (uid == null) return;
     final doc = await FirebaseFirestore.instance
         .collection(FirebaseCollections.users)
@@ -37,7 +37,7 @@ class ProfileProvider extends GetxController {
     FirestoreReadCounter.increment();
     if (doc.exists) {
       profile.value = UserModel.fromFirestore(doc);
-      UserAuthProvider.to.currentUser.value = profile.value;
+      AuthProvider.to.currentUser.value = profile.value;
     }
   }
 
@@ -63,7 +63,7 @@ class ProfileProvider extends GetxController {
         file,
         onProgress: (p) => uploadProgress.value = p,
       );
-      final uid = UserAuthProvider.to.currentUser.value!.uid;
+      final uid = AuthProvider.to.currentUser.value!.uid;
       await FirebaseFirestore.instance
           .collection(FirebaseCollections.users)
           .doc(uid)
@@ -78,7 +78,7 @@ class ProfileProvider extends GetxController {
         resumeUrl: upload['secureUrl'],
         resumePublicId: upload['publicId'],
       );
-      UserAuthProvider.to.currentUser.value = profile.value;
+      AuthProvider.to.currentUser.value = profile.value;
       AppLogger.i('Resume uploaded: ${upload['publicId']}');
     } catch (e) {
       Get.snackbar('Upload Failed', e.toString());
@@ -107,7 +107,7 @@ class ProfileProvider extends GetxController {
         folder: 'rozgar/avatars',
         onProgress: (p) => uploadProgress.value = p,
       );
-      final uid = UserAuthProvider.to.currentUser.value!.uid;
+      final uid = AuthProvider.to.currentUser.value!.uid;
       await FirebaseFirestore.instance
           .collection(FirebaseCollections.users)
           .doc(uid)
@@ -116,7 +116,7 @@ class ProfileProvider extends GetxController {
         upload['secureUrl'],
       );
       profile.value = profile.value?.copyWith(photoUrl: upload['secureUrl']);
-      UserAuthProvider.to.currentUser.value = profile.value;
+      AuthProvider.to.currentUser.value = profile.value;
     } catch (e) {
       Get.snackbar('Upload Failed', e.toString());
     } finally {
@@ -125,7 +125,7 @@ class ProfileProvider extends GetxController {
   }
 
   Future<void> updateProfile(Map<String, dynamic> updates) async {
-    final uid = UserAuthProvider.to.currentUser.value?.uid;
+    final uid = AuthProvider.to.currentUser.value?.uid;
     if (uid == null) return;
     final encrypted = Map<String, dynamic>.from(updates);
     if (encrypted.containsKey('phone')) {
@@ -173,7 +173,7 @@ class ProfileProvider extends GetxController {
     InAppPurchase.instance.purchaseStream.listen((purchases) async {
       for (final p in purchases) {
         if (p.status == PurchaseStatus.purchased) {
-          final uid = UserAuthProvider.to.currentUser.value?.uid;
+          final uid = AuthProvider.to.currentUser.value?.uid;
           if (uid != null) {
             await FirebaseFirestore.instance
                 .collection(FirebaseCollections.users)

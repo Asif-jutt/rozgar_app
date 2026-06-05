@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:rozgar/shared/constants/firebase_constants.dart';
+import 'package:rozgar/shared/widgets/responsive_center.dart';
+import 'package:rozgar/user/constants/app_colors.dart';
 import 'package:rozgar/user/constants/app_routes.dart';
 import 'package:rozgar/user/constants/app_strings.dart';
 import 'package:rozgar/user/providers/auth_provider.dart';
@@ -30,16 +32,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
+  void dispose() {
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = AuthProvider.to;
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.signUp)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      appBar: AppBar(
+        title: const Text(AppStrings.signUp),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: ResponsiveCenter(
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                'Create your account',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Join Rozgar to find opportunities or hire talent',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _name,
                 decoration: const InputDecoration(
@@ -58,8 +87,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icon(Icons.email_outlined),
                   filled: true,
                 ),
-                validator: (v) =>
-                    v == null || !v.contains('@') ? 'Valid email required' : null,
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) => v == null || !v.contains('@')
+                    ? 'Valid email required'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -82,9 +113,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   prefixIcon: Icon(Icons.lock_outlined),
                   filled: true,
                 ),
-                validator: (v) => v != _password.text ? 'Passwords must match' : null,
+                validator: (v) =>
+                    v != _password.text ? 'Passwords must match' : null,
               ),
               const SizedBox(height: 24),
+              Obx(() {
+                if (auth.errorMessage.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    auth.errorMessage.value,
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                );
+              }),
               Obx(() => CustomButton(
                     label: AppStrings.signUp,
                     isLoading: auth.isLoading.value,

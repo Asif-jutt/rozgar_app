@@ -6,8 +6,8 @@ import 'package:encrypt/encrypt.dart' as enc;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
+import 'package:rozgar/shared/services/platform_secure_storage.dart';
 
 class FirebaseCollections {
   static const users = 'users';
@@ -23,17 +23,15 @@ class FirebaseCollections {
 
 class EncryptionHelper {
   static const _keyStorageKey = 'aes_key';
-  static const _ivStorageKey = 'aes_iv';
-  static const _storage = FlutterSecureStorage();
   static enc.Key? _key;
   static enc.Encrypter? _encrypter;
 
   static Future<void> generateAndStoreKey() async {
-    String? keyStr = await _storage.read(key: _keyStorageKey);
+    String? keyStr = await PlatformSecureStorage.read(_keyStorageKey);
     if (keyStr == null) {
       final key = enc.Key.fromSecureRandom(32);
       keyStr = key.base64;
-      await _storage.write(key: _keyStorageKey, value: keyStr);
+      await PlatformSecureStorage.write(_keyStorageKey, keyStr);
     }
     _key = enc.Key.fromBase64(keyStr);
     _encrypter = enc.Encrypter(enc.AES(_key!, mode: enc.AESMode.cbc));
@@ -106,7 +104,7 @@ class AppLogger {
     final msg = '${_prefix()} $message';
     if (kDebugMode) {
       instance._logger.w(msg);
-    } else {
+    } else if (!kIsWeb) {
       FirebaseCrashlytics.instance.log(msg);
     }
   }
@@ -115,7 +113,7 @@ class AppLogger {
     final msg = '${_prefix()} $error';
     if (kDebugMode) {
       instance._logger.e(msg, error: error, stackTrace: st);
-    } else {
+    } else if (!kIsWeb) {
       FirebaseCrashlytics.instance.recordError(error, st, reason: msg);
     }
   }
