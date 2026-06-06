@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
@@ -36,15 +34,22 @@ class CompanyProfileProvider extends GetxController {
   Future<void> uploadLogo() async {
     final granted = await PermissionHelper.requestStorage();
     if (!granted) return;
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result == null || result.files.single.path == null) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.single;
+    final bytes = picked.bytes;
+    if (bytes == null) return;
 
     isUploading.value = true;
     uploadProgress.value = 0;
     try {
       final oldId = company.value?.logoPublicId;
-      final upload = await CloudinaryService.instance.uploadImage(
-        File(result.files.single.path!),
+      final upload = await CloudinaryService.instance.uploadImageBytes(
+        bytes,
+        filename: picked.name,
         folder: 'rozgar/logos',
         onProgress: (p) => uploadProgress.value = p,
       );

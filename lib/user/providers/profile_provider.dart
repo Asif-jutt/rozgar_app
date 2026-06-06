@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:firebase_performance/firebase_performance.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -48,10 +47,14 @@ class ProfileProvider extends GetxController {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
+      withData: true,
     );
-    if (result == null || result.files.single.path == null) return;
+    if (result == null || result.files.isEmpty) return;
 
-    final file = File(result.files.single.path!);
+    final picked = result.files.single;
+    final bytes = picked.bytes;
+    if (bytes == null) return;
+
     final trace = FirebasePerformance.instance.newTrace('resume_upload');
     await trace.start();
     isUploading.value = true;
@@ -59,8 +62,9 @@ class ProfileProvider extends GetxController {
 
     try {
       final oldPublicId = profile.value?.resumePublicId;
-      final upload = await CloudinaryService.instance.uploadResumeSync(
-        file,
+      final upload = await CloudinaryService.instance.uploadResumeBytes(
+        bytes,
+        filename: picked.name,
         onProgress: (p) => uploadProgress.value = p,
       );
       final uid = AuthProvider.to.currentUser.value!.uid;
@@ -68,9 +72,9 @@ class ProfileProvider extends GetxController {
           .collection(FirebaseCollections.users)
           .doc(uid)
           .update({
-            'resumeUrl': upload['secureUrl'],
-            'resumePublicId': upload['publicId'],
-          });
+        'resumeUrl': upload['secureUrl'],
+        'resumePublicId': upload['publicId'],
+      });
       if (oldPublicId != null) {
         await CloudinaryService.instance.deleteFile(oldPublicId);
       }
@@ -90,6 +94,11 @@ class ProfileProvider extends GetxController {
   }
 
   Future<void> uploadProfileImage(ImageSource source) async {
+    if (kIsWeb && source == ImageSource.camera) {
+      Get.snackbar('Info', 'Camera is not available in the browser. Pick a file instead.');
+      return;
+    }
+
     final granted = source == ImageSource.camera
         ? await PermissionHelper.requestCamera()
         : await PermissionHelper.requestStorage();
@@ -102,8 +111,10 @@ class ProfileProvider extends GetxController {
     isUploading.value = true;
     uploadProgress.value = 0;
     try {
-      final upload = await CloudinaryService.instance.uploadImage(
-        File(image.path),
+      final bytes = await image.readAsBytes();
+      final upload = await CloudinaryService.instance.uploadImageBytes(
+        bytes,
+        filename: image.name,
         folder: 'rozgar/avatars',
         onProgress: (p) => uploadProgress.value = p,
       );
@@ -152,6 +163,14 @@ class ProfileProvider extends GetxController {
   }
 
   Future<void> purchasePremium() async {
+    if (kIsWeb) {
+      Get.snackbar(
+        'Premium',
+        'In-app purchases are available on Android/iOS. On web, contact admin to enable premium.',
+      );
+      return;
+    }
+
     const productId = 'rozgar_premium_monthly';
     final available = await InAppPurchase.instance.isAvailable();
     if (!available) {

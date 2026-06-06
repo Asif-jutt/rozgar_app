@@ -137,7 +137,7 @@ Future<void> _initHiveBoxes() async {
     AppLogger.i('Hive boxes initialized: ${boxes.join(", ")}');
   } catch (e, st) {
     AppLogger.e('Failed to initialize Hive boxes', st);
-    rethrow;
+    if (!kIsWeb) rethrow;
   }
 }
 

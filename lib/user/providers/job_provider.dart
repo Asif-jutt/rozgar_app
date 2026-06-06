@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_performance/firebase_performance.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -204,6 +205,7 @@ class JobProvider extends GetxController {
   }
 
   void scheduleBackgroundSync() {
+    if (kIsWeb) return;
     Workmanager().registerPeriodicTask(
       'sync_jobs_task',
       'syncJobs',
