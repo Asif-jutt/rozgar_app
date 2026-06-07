@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rozgar/services/auth_service.dart';
+import 'package:rozgar/user/constants/app_constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -92,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surfaceColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -107,22 +108,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
+                          color: AppColors.primaryColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.work,
                           size: 60,
-                          color: Colors.blue.shade900,
+                          color: AppColors.primaryColor,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         'Rozgar',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade900,
+                        style: AppTextStyles.headline2.copyWith(
+                          color: AppColors.primaryColor,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -173,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Colors.blue,
+                        color: AppColors.primaryColor,
                         width: 2,
                       ),
                     ),
@@ -204,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Colors.blue,
+                        color: AppColors.primaryColor,
                         width: 2,
                       ),
                     ),
@@ -225,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade900,
+                      backgroundColor: AppColors.primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -266,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               'Sign Up',
                               style: TextStyle(
-                                color: Colors.blue.shade900,
+                                color: AppColors.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

@@ -13,9 +13,11 @@ import 'company/screens/dashboard.dart';
 import 'company/screens/postjob.dart';
 import 'company/screens/companyprofile.dart';
 import 'company/screens/manageapplicants.dart';
+import 'company/screens/company_notifications_screen.dart';
 
 import 'admin/screens/admindashboard.dart';
 import 'admin/screens/usermanage.dart';
+import 'admin/screens/admin_system_screen.dart';
 
 class Rozgar extends StatelessWidget {
   const Rozgar({super.key});
@@ -100,8 +102,11 @@ class Rozgar extends StatelessWidget {
         '/post-jobs': (context) => const PostJobsPage(),
         '/company-profile': (context) => const CompanyProfilePage(),
         '/manage-applicants': (context) => const ManageApplicantsPage(),
+        '/company-notifications': (context) =>
+            const CompanyNotificationsScreen(),
         '/admin_dashboard': (context) => const AdminDashboardPage(),
         '/user-manages': (context) => const UsersManageScreen(),
+        '/admin-system': (context) => const AdminSystemScreen(),
       },
     );
   }

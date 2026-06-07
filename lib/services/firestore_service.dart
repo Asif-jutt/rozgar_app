@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rozgar/core/app_images.dart';
+import 'package:rozgar/core/encryption/encryption_service.dart';
+import 'package:rozgar/core/logger/app_logger.dart';
 import 'package:rozgar/models/app_user.dart';
 import 'package:rozgar/models/application_model.dart';
 import 'package:rozgar/models/job_model.dart';
 import 'package:rozgar/models/user_profile_model.dart';
+import 'package:rozgar/services/notification_service.dart';
+import 'package:rozgar/services/profiling_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final EncryptionService _encryption = EncryptionService.instance;
 
   // ─── USERS ───────────────────────────────────────────────────────────────
 
@@ -15,9 +20,11 @@ class FirestoreService {
   }
 
   Future<AppUser?> getUser(String uid) async {
-    final doc = await _db.collection('users').doc(uid).get();
-    if (!doc.exists) return null;
-    return AppUser.fromMap(doc.data()!);
+    return ProfilingService.instance.trace('firestore_get_user', () async {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      return AppUser.fromMap(doc.data()!);
+    });
   }
 
   Stream<AppUser?> userStream(String uid) {
@@ -43,22 +50,36 @@ class FirestoreService {
   // ─── USER PROFILES ─────────────────────────────────────────────────────────
 
   Future<void> saveUserProfile(UserProfileModel profile) async {
+    final map = profile.toMap();
+    if (profile.cvResumeUrl != null && profile.cvResumeUrl!.isNotEmpty) {
+      map['cvResumeUrl'] = _encryption.encrypt(profile.cvResumeUrl!);
+    }
     await _db
         .collection('user_profiles')
         .doc(profile.userId)
-        .set(profile.toMap(), SetOptions(merge: true));
+        .set(map, SetOptions(merge: true));
   }
 
   Future<UserProfileModel?> getUserProfile(String userId) async {
     final doc = await _db.collection('user_profiles').doc(userId).get();
     if (!doc.exists) return null;
-    return UserProfileModel.fromMap(userId, doc.data()!);
+    final profile = UserProfileModel.fromMap(userId, doc.data()!);
+    final cv = profile.cvResumeUrl;
+    if (cv != null && cv.isNotEmpty) {
+      return profile.copyWith(cvResumeUrl: _encryption.decrypt(cv));
+    }
+    return profile;
   }
 
   Stream<UserProfileModel?> userProfileStream(String userId) {
     return _db.collection('user_profiles').doc(userId).snapshots().map((doc) {
       if (!doc.exists) return null;
-      return UserProfileModel.fromMap(userId, doc.data()!);
+      final profile = UserProfileModel.fromMap(userId, doc.data()!);
+      final cv = profile.cvResumeUrl;
+      if (cv != null && cv.isNotEmpty) {
+        return profile.copyWith(cvResumeUrl: _encryption.decrypt(cv));
+      }
+      return profile;
     });
   }
 
@@ -83,7 +104,6 @@ class FirestoreService {
     await _db.collection('jobs').doc(jobId).delete();
   }
 
-  /// Stream: all jobs (newest first).
   Stream<List<JobModel>> jobsStream() {
     return _db
         .collection('jobs')
@@ -116,7 +136,11 @@ class FirestoreService {
   // ─── APPLICATIONS ─────────────────────────────────────────────────────────
 
   Future<String> createApplication(ApplicationModel application) async {
-    final ref = await _db.collection('applications').add(application.toMap());
+    final map = application.toMap();
+    if (application.resumeText.isNotEmpty) {
+      map['resumeText'] = _encryption.encrypt(application.resumeText);
+    }
+    final ref = await _db.collection('applications').add(map);
     return ref.id;
   }
 
@@ -137,7 +161,6 @@ class FirestoreService {
     await _db.collection('applications').doc(appId).update({'status': status});
   }
 
-  /// Stream: applications for a specific user (seeker).
   Stream<List<ApplicationModel>> userApplicationsStream(String userId) {
     return _db
         .collection('applications')
@@ -145,11 +168,10 @@ class FirestoreService {
         .orderBy('appliedDate', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+            .map((d) => _decryptApplication(d.id, d.data()))
             .toList());
   }
 
-  /// Stream: applicants for a specific job (company view).
   Stream<List<ApplicationModel>> jobApplicantsStream(String jobId) {
     return _db
         .collection('applications')
@@ -157,7 +179,7 @@ class FirestoreService {
         .orderBy('appliedDate', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+            .map((d) => _decryptApplication(d.id, d.data()))
             .toList());
   }
 
@@ -168,8 +190,24 @@ class FirestoreService {
         .orderBy('appliedDate', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+            .map((d) => _decryptApplication(d.id, d.data()))
             .toList());
+  }
+
+  ApplicationModel _decryptApplication(String id, Map<String, dynamic> data) {
+    final app = ApplicationModel.fromMap(id, data);
+    if (app.resumeText.isEmpty) return app;
+    return ApplicationModel(
+      appId: app.appId,
+      jobId: app.jobId,
+      userId: app.userId,
+      companyId: app.companyId,
+      status: app.status,
+      appliedDate: app.appliedDate,
+      resumeText: _encryption.decrypt(app.resumeText),
+      applicantName: app.applicantName,
+      jobTitle: app.jobTitle,
+    );
   }
 
   Future<List<ApplicationModel>> getApplicationsByCompany(
@@ -181,11 +219,11 @@ class FirestoreService {
         .orderBy('appliedDate', descending: true)
         .get();
     return snap.docs
-        .map((d) => ApplicationModel.fromMap(d.id, d.data()))
+        .map((d) => _decryptApplication(d.id, d.data()))
         .toList();
   }
 
-  // ─── NOTIFICATIONS (in-app, Firestore only) ────────────────────────────────
+  // ─── NOTIFICATIONS ─────────────────────────────────────────────────────────
 
   Future<void> sendNotification({
     required String userId,
@@ -193,42 +231,42 @@ class FirestoreService {
     required String body,
     String? relatedId,
   }) async {
-    await _db.collection('notifications').add({
-      'userId': userId,
-      'title': title,
-      'body': body,
-      'read': false,
-      'relatedId': relatedId,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
+    await NotificationService().sendNotification(
+      userId: userId,
+      title: title,
+      body: body,
+      relatedId: relatedId,
+    );
   }
 
   // ─── ADMIN STATS ───────────────────────────────────────────────────────────
 
   Future<Map<String, int>> getPlatformStats() async {
-    final users = await _db.collection('users').get();
-    final jobs = await _db.collection('jobs').get();
-    final apps = await _db.collection('applications').get();
+    return ProfilingService.instance.trace('firestore_platform_stats', () async {
+      final users = await _db.collection('users').get();
+      final jobs = await _db.collection('jobs').get();
+      final apps = await _db.collection('applications').get();
 
-    int seekers = 0, companies = 0, admins = 0;
-    for (final doc in users.docs) {
-      final role = doc.data()['userRole'] ?? 'seeker';
-      if (role == 'company') {
-        companies++;
-      } else if (role == 'admin') {
-        admins++;
-      } else {
-        seekers++;
+      int seekers = 0, companies = 0, admins = 0;
+      for (final doc in users.docs) {
+        final role = doc.data()['userRole'] ?? 'seeker';
+        if (role == 'company') {
+          companies++;
+        } else if (role == 'admin') {
+          admins++;
+        } else {
+          seekers++;
+        }
       }
-    }
 
-    return {
-      'seekers': seekers,
-      'companies': companies,
-      'admins': admins,
-      'jobs': jobs.docs.length,
-      'applications': apps.docs.length,
-    };
+      return {
+        'seekers': seekers,
+        'companies': companies,
+        'admins': admins,
+        'jobs': jobs.docs.length,
+        'applications': apps.docs.length,
+      };
+    });
   }
 
   // ─── HELPERS ───────────────────────────────────────────────────────────────
@@ -253,6 +291,16 @@ class FirestoreService {
       jobTitle: jobTitle,
     );
     final id = await createApplication(app);
+
+    await NotificationService().sendNotification(
+      userId: companyId,
+      title: 'New Application',
+      body: '$applicantName applied for $jobTitle',
+      type: 'application',
+      relatedId: id,
+    );
+
+    AppLogger.info('Application submitted: $id for job $jobId');
     return ApplicationModel(
       appId: id,
       jobId: jobId,
@@ -266,5 +314,6 @@ class FirestoreService {
     );
   }
 
-  String defaultJobImage(String category) => AppImages.jobImageForCategory(category);
+  String defaultJobImage(String category) =>
+      AppImages.jobImageForCategory(category);
 }

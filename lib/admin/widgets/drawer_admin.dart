@@ -47,6 +47,14 @@ class AdminDrawer extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/user-manages');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.speed),
+            title: const Text('System & Profiling'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/admin-system');
+            },
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: AppColors.errorColor),

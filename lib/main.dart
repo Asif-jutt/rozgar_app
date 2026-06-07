@@ -1,38 +1,25 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:rozgar/app.dart';
-import 'package:rozgar/services/notification_service.dart';
+import 'package:rozgar/core/app_initializer.dart';
+import 'package:rozgar/core/logger/app_logger.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    if (kDebugMode) {
-      debugPrint('FlutterError: ${details.exception}');
-    }
-  };
-
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    AppLogger.info('Firebase initialized');
   } catch (e, st) {
-    debugPrint('Firebase init failed: $e\n$st');
+    AppLogger.error('Firebase init failed', e, st);
     runApp(_BootstrapErrorApp(message: 'Firebase failed to start: $e'));
     return;
   }
 
-  // FCM can hang or fail on web without a service worker — never block UI.
-  if (!kIsWeb) {
-    try {
-      await NotificationService().initialize();
-    } catch (e) {
-      debugPrint('NotificationService init skipped: $e');
-    }
-  }
+  await AppInitializer.instance.initialize();
 
   runApp(const Rozgar());
 }

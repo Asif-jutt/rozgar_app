@@ -1,21 +1,28 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:rozgar/app.dart';
+import 'package:rozgar/firebase_options.dart';
 
 void main() {
-  testWidgets('Rozgar app loads successfully', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const Rozgar());
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setupFirebaseCoreMocks();
 
-    // Verify that the app loads
+  setUpAll(() async {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } on FirebaseException catch (e) {
+      if (e.code != 'duplicate-app') rethrow;
+    }
+  });
+
+  testWidgets('Rozgar app loads successfully', (WidgetTester tester) async {
+    await tester.pumpWidget(const Rozgar());
     expect(find.byType(MaterialApp), findsOneWidget);
+    // Flush splash screen delay timer
+    await tester.pump(const Duration(seconds: 3));
   });
 }

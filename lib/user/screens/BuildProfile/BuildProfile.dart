@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:rozgar/models/user_profile_model.dart';
 import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/services/permission_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
@@ -60,6 +61,7 @@ class _BuildprofileUIState extends State<BuildprofileUI> {
 
     setState(() => _saving = true);
     try {
+      await PermissionService.instance.requestStoragePermission();
       final profile = UserProfileModel(
         userId: user.uid,
         bio: _bioCtrl.text.trim(),

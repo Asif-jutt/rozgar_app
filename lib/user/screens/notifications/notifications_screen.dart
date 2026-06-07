@@ -14,9 +14,18 @@ class NotificationsScreen extends StatelessWidget {
     final service = NotificationService();
 
     return Scaffold(
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Notifications',
         showBackButton: true,
+        actions: uid != null
+            ? [
+                TextButton(
+                  onPressed: () => service.markAllRead(uid),
+                  child: const Text('Mark all read',
+                      style: TextStyle(color: Colors.white)),
+                ),
+              ]
+            : null,
       ),
       body: uid == null
           ? const Center(child: Text('Please log in'))

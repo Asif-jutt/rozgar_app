@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:rozgar/core/logger/app_logger.dart';
 import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/services/notification_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -40,6 +42,10 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
+      await NotificationService().saveFcmToken(appUser.uid);
+      if (!mounted) return;
+      AppLogger.info('User logged in as ${appUser.userRole}');
+
       switch (appUser.userRole) {
         case 'seeker':
           Navigator.of(context).pushReplacementNamed('/user_home');
@@ -54,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> {
           Navigator.of(context).pushReplacementNamed('/login');
       }
     } catch (e) {
-      debugPrint('Splash auth check error: $e');
+      AppLogger.error('Splash auth check error', e);
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/login');
       }

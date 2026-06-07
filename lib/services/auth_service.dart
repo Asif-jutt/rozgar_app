@@ -1,16 +1,22 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rozgar/models/app_user.dart';
 import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/services/notification_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreService _firestore = FirestoreService();
+  final NotificationService _notifications = NotificationService();
 
   Stream<AppUser?> get authStateChanges {
     return _auth.authStateChanges().asyncMap((user) async {
       if (user == null) return null;
       return _firestore.getUser(user.uid);
     });
+  }
+
+  Future<void> _afterAuth(AppUser user) async {
+    await _notifications.saveFcmToken(user.uid);
   }
 
   Future<AppUser?> signUpWithEmail({
@@ -39,6 +45,7 @@ class AuthService {
         profileImageUrl: profileImageUrl,
       );
       await _firestore.createUser(appUser);
+      await _afterAuth(appUser);
       return appUser;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthError(e);
@@ -55,7 +62,9 @@ class AuthService {
         password: password,
       );
       if (cred.user == null) return null;
-      return _firestore.getUser(cred.user!.uid);
+      final appUser = await _firestore.getUser(cred.user!.uid);
+      if (appUser != null) await _afterAuth(appUser);
+      return appUser;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthError(e);
     }

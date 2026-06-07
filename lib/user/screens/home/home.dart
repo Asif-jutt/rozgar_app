@@ -1,14 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:rozgar/core/app_images.dart';
+import 'package:rozgar/core/logger/app_logger.dart';
 import 'package:rozgar/models/job_model.dart';
 import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/services/notification_service.dart';
+import 'package:rozgar/services/rest_api_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/screens/job_details/job_details.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/custom_widgets.dart';
 import 'package:rozgar/user/widgets/drawer.dart';
 import 'package:rozgar/user/widgets/job_card.dart';
+import 'package:rozgar/widgets/banner_ad_widget.dart';
+import 'package:rozgar/widgets/remote_jobs_section.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class Home extends StatefulWidget {
@@ -25,6 +30,28 @@ class _HomeState extends State<Home> {
   String _searchQuery = '';
   String _selectedLocation = 'All';
   String _selectedCategory = 'All';
+  List<String> _locations = RestApiService.defaultLocations;
+  static const _categories = [
+    'All',
+    'IT',
+    'Engineering',
+    'Marketing',
+    'Sales',
+    'Finance',
+    'Design',
+    'Healthcare',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocations();
+  }
+
+  Future<void> _loadLocations() async {
+    final locations = await RestApiService.instance.fetchLocations();
+    if (mounted) setState(() => _locations = locations);
+  }
 
   @override
   void dispose() {
@@ -35,7 +62,8 @@ class _HomeState extends State<Home> {
   List<JobModel> _filter(List<JobModel> jobs) {
     final q = _searchQuery.trim().toLowerCase();
     return jobs.where((job) {
-      if (_selectedLocation != 'All' && job.location != _selectedLocation) {
+      if (_selectedLocation != 'All' &&
+          !job.location.toLowerCase().contains(_selectedLocation.toLowerCase())) {
         return false;
       }
       if (_selectedCategory != 'All' && job.category != _selectedCategory) {
@@ -79,6 +107,14 @@ class _HomeState extends State<Home> {
         resumeText: resumeText,
       );
 
+      await NotificationService().sendNotification(
+        userId: user.uid,
+        title: 'Application Sent',
+        body: 'You applied to ${job.title}',
+        type: 'application',
+        relatedId: job.jobId,
+      );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -87,6 +123,7 @@ class _HomeState extends State<Home> {
         ),
       );
     } catch (e) {
+      AppLogger.error('Apply to job failed', e);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
@@ -118,6 +155,30 @@ class _HomeState extends State<Home> {
               onFilterPressed: _showFilters,
             ),
           ),
+          if (_selectedLocation != 'All' || _selectedCategory != 'All')
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  if (_selectedLocation != 'All')
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Chip(
+                        label: Text(_selectedLocation),
+                        onDeleted: () =>
+                            setState(() => _selectedLocation = 'All'),
+                      ),
+                    ),
+                  if (_selectedCategory != 'All')
+                    Chip(
+                      label: Text(_selectedCategory),
+                      onDeleted: () =>
+                          setState(() => _selectedCategory = 'All'),
+                    ),
+                ],
+              ),
+            ),
+          const RemoteJobsSection(),
           Expanded(
             child: StreamBuilder<List<JobModel>>(
               stream: _firestore.jobsStream(),
@@ -180,13 +241,15 @@ class _HomeState extends State<Home> {
               },
             ),
           ),
+          const BannerAdWidget(),
         ],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _selectedBottomNavIndex,
         items: [
           NavigationItem(icon: Icons.home, label: AppStrings.home),
-          NavigationItem(icon: Icons.assignment, label: AppStrings.myApplications),
+          NavigationItem(
+              icon: Icons.assignment, label: AppStrings.myApplications),
           NavigationItem(icon: Icons.person, label: AppStrings.profile),
         ],
         onTap: (index) {
@@ -208,26 +271,87 @@ class _HomeState extends State<Home> {
   void _showFilters() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Filters', style: AppTextStyles.headline4),
-            const SizedBox(height: 16),
-            const Text('Location'),
-            const SizedBox(height: 8),
-            Text('Use search bar for quick filter. Location: $_selectedLocation'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Done'),
-            ),
-          ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Filters', style: AppTextStyles.headline4),
+              const SizedBox(height: 16),
+              Text('Location', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: ValueKey(_selectedLocation),
+                initialValue: _locations.contains(_selectedLocation)
+                    ? _selectedLocation
+                    : 'All',
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: _locations
+                    .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                    .toList(),
+                onChanged: (v) =>
+                    setModalState(() => _selectedLocation = v ?? 'All'),
+              ),
+              const SizedBox(height: 16),
+              Text('Category', style: AppTextStyles.labelMedium),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                key: ValueKey(_selectedCategory),
+                initialValue: _selectedCategory,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: _categories
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
+                onChanged: (v) =>
+                    setModalState(() => _selectedCategory = v ?? 'All'),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        setModalState(() {
+                          _selectedLocation = 'All';
+                          _selectedCategory = 'All';
+                        });
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {});
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Apply Filters'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
