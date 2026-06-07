@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/app_notification.dart';
+import 'package:rozgar/user/models/app_notification.dart';
 import 'package:rozgar/services/notification_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';

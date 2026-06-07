@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:rozgar/core/config/external_services_config.dart';
 import 'package:rozgar/core/logger/app_logger.dart';
 
 /// Google Mobile Ads integration for banner monetization.
@@ -9,10 +10,7 @@ class AdService {
 
   bool _initialized = false;
 
-  /// Official Google test banner ad unit ID.
-  static const String bannerAdUnitId = kDebugMode
-      ? 'ca-app-pub-3940256099942544/6300978111'
-      : 'ca-app-pub-3940256099942544/6300978111';
+  static String get bannerAdUnitId => ExternalServicesConfig.bannerAdUnitId;
 
   Future<void> initialize() async {
     if (kIsWeb) return;

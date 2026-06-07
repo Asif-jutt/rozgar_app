@@ -4,7 +4,7 @@ import 'package:rozgar/services/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/user/widgets/app_bar_widgets.dart';
 import 'package:rozgar/user/widgets/drawer.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/core/widgets/network_image_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Myprofile extends StatelessWidget {

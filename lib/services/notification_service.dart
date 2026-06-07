@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rozgar/core/logger/app_logger.dart';
 import 'package:rozgar/firebase_options.dart';
-import 'package:rozgar/models/app_notification.dart';
+import 'package:rozgar/user/models/app_notification.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {

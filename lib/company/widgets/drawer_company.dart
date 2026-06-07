@@ -32,6 +32,7 @@ class CompanyDrawer extends StatelessWidget {
           _item(context, Icons.dashboard, 'Dashboard', '/company_dashboard'),
           _item(context, Icons.post_add, 'Post a Job', '/post-jobs'),
           _item(context, Icons.people, 'Manage Applicants', '/manage-applicants'),
+          _item(context, Icons.chat, AppStrings.messages, '/messages'),
           _item(context, Icons.business, 'Company Profile', '/company-profile'),
           const Divider(),
           ListTile(

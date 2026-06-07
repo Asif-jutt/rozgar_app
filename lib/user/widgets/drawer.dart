@@ -32,6 +32,8 @@ class SeekerDrawer extends StatelessWidget {
           _tile(context, Icons.home, AppStrings.home, '/user_home'),
           _tile(context, Icons.person, AppStrings.myProfile, '/myprofile'),
           _tile(context, Icons.assignment, AppStrings.myApplications, '/myapplication'),
+          _tile(context, Icons.favorite, 'Saved Jobs', '/saved-jobs'),
+          _tile(context, Icons.chat, AppStrings.messages, '/messages'),
           _tile(context, Icons.edit, AppStrings.buildProfile, '/buildprofile'),
           _tile(context, Icons.notifications, 'Notifications', '/notifications'),
           const Divider(),

@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rozgar/core/app_images.dart';
 import 'package:rozgar/core/encryption/encryption_service.dart';
 import 'package:rozgar/core/logger/app_logger.dart';
-import 'package:rozgar/models/app_user.dart';
-import 'package:rozgar/models/application_model.dart';
-import 'package:rozgar/models/job_model.dart';
-import 'package:rozgar/models/user_profile_model.dart';
+import 'package:rozgar/user/models/app_user.dart';
+import 'package:rozgar/user/models/application_model.dart';
+import 'package:rozgar/user/models/job_model.dart';
+import 'package:rozgar/user/models/user_profile_model.dart';
 import 'package:rozgar/services/notification_service.dart';
 import 'package:rozgar/services/profiling_service.dart';
 

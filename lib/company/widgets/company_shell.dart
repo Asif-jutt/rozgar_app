@@ -47,6 +47,9 @@ class CompanyShell extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/manage-applicants');
               break;
             case 3:
+              Navigator.pushNamed(context, '/messages');
+              break;
+            case 4:
               Navigator.pushReplacementNamed(context, '/company-profile');
               break;
           }
@@ -54,10 +57,8 @@ class CompanyShell extends StatelessWidget {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.post_add), label: 'Post'),
-          NavigationDestination(
-            icon: Icon(Icons.people),
-            label: 'Applicants',
-          ),
+          NavigationDestination(icon: Icon(Icons.people), label: 'Applicants'),
+          NavigationDestination(icon: Icon(Icons.chat), label: 'Messages'),
           NavigationDestination(icon: Icon(Icons.business), label: 'Profile'),
         ],
       ),

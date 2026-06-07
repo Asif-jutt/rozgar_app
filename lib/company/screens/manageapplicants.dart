@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/application_model.dart';
+import 'package:rozgar/user/models/application_model.dart';
+import 'package:rozgar/user/models/conversation.dart';
+import 'package:rozgar/screens/messaging/chat_screen.dart';
 import 'package:rozgar/services/firestore_service.dart';
+import 'package:rozgar/services/messaging_service.dart';
 import 'package:rozgar/services/notification_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:rozgar/company/widgets/company_shell.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/core/widgets/network_image_widget.dart';
 
 class ManageApplicantsPage extends StatefulWidget {
   const ManageApplicantsPage({super.key});
@@ -17,7 +20,42 @@ class ManageApplicantsPage extends StatefulWidget {
 class _ManageApplicantsPageState extends State<ManageApplicantsPage> {
   final _firestore = FirestoreService();
   final _notifications = NotificationService();
+  final _messaging = MessagingService.instance;
   String _filter = 'All';
+
+  Future<void> _messageApplicant(ApplicationModel app) async {
+    final company = FirebaseAuth.instance.currentUser;
+    if (company == null) return;
+    final companyDoc = await _firestore.getUser(company.uid);
+    final seekerDoc = await _firestore.getUser(app.userId);
+
+    final convId = await _messaging.getOrCreateConversation(
+      seekerId: app.userId,
+      companyId: company.uid,
+      seekerName: seekerDoc?.name ?? app.applicantName ?? 'Seeker',
+      companyName: companyDoc?.name ?? 'Company',
+      jobId: app.jobId,
+      jobTitle: app.jobTitle,
+    );
+
+    if (!mounted) return;
+    final conv = Conversation(
+      id: convId,
+      participantIds: [app.userId, company.uid],
+      seekerId: app.userId,
+      companyId: company.uid,
+      seekerName: seekerDoc?.name ?? app.applicantName ?? 'Seeker',
+      companyName: companyDoc?.name ?? 'Company',
+      jobId: app.jobId,
+      jobTitle: app.jobTitle,
+      lastMessage: '',
+      updatedAt: DateTime.now(),
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ChatScreen(conversation: conv)),
+    );
+  }
 
   Future<void> _updateStatus(ApplicationModel app, String status) async {
     await _firestore.updateApplicationStatus(app.appId, status);
@@ -118,6 +156,12 @@ class _ManageApplicantsPageState extends State<ManageApplicantsPage> {
                               ),
                             ],
                             const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () => _messageApplicant(app),
+                              icon: const Icon(Icons.chat, size: 18),
+                              label: const Text('Message Applicant'),
+                            ),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Expanded(

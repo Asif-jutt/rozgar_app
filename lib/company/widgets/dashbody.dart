@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/job_model.dart';
+import 'package:rozgar/user/models/job_model.dart';
 import 'package:rozgar/services/firestore_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/widgets/banner_ad_widget.dart';
-import 'package:rozgar/widgets/network_image_widget.dart';
+import 'package:rozgar/core/widgets/banner_ad_widget.dart';
+import 'package:rozgar/core/widgets/network_image_widget.dart';
 
 class DashboardBody extends StatelessWidget {
   const DashboardBody({super.key});

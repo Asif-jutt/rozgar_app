@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rozgar/services/profiling_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
-import 'package:rozgar/widgets/banner_ad_widget.dart';
+import 'package:rozgar/core/widgets/banner_ad_widget.dart';
 
 /// Admin view for profiling metrics and system diagnostics.
 class AdminSystemScreen extends StatelessWidget {

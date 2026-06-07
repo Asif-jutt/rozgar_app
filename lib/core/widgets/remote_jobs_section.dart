@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rozgar/models/remote_job.dart';
+import 'package:rozgar/user/models/remote_job.dart';
 import 'package:rozgar/services/rest_api_service.dart';
 import 'package:rozgar/user/constants/app_constants.dart';
 import 'package:url_launcher/url_launcher.dart';

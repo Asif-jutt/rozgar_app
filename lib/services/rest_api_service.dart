@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:rozgar/core/config/external_services_config.dart';
 import 'package:rozgar/core/logger/app_logger.dart';
-import 'package:rozgar/models/remote_job.dart';
+import 'package:rozgar/user/models/remote_job.dart';
 import 'package:rozgar/services/profiling_service.dart';
 
 /// External REST API integration (Remotive + REST Countries).
@@ -10,9 +11,8 @@ class RestApiService {
   RestApiService._();
   static final RestApiService instance = RestApiService._();
 
-  static const _remotiveUrl = 'https://remotive.com/api/remote-jobs';
-  static const _countriesUrl =
-      'https://restcountries.com/v3.1/all?fields=name,capital';
+  static const _remotiveUrl = ExternalServicesConfig.remotiveJobsApi;
+  static const _countriesUrl = ExternalServicesConfig.restCountriesApi;
 
   final http.Client _client = http.Client();
 
